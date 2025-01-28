@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import ChatSupport from "@/components/chat-support";
+import { SessionProvider } from "next-auth/react";
 
-const inter = Inter({ subsets: ["latin"] });
+import { ThemeProvider } from "@/components/providers";
+import { LoginDialogProvider } from "@/context/login-dialog-context";
+import { fontSans } from "@/lib/fonts";
+import { cn } from "@/lib/utils";
+
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,12 +19,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-muted/30`}>
-        <ThemeProvider attribute="class" defaultTheme="system">
-          {children}
-          <ChatSupport />
-        </ThemeProvider>
+    <html
+      lang="pt-br"
+      className={cn(
+        "min-h-screen bg-background font-sans antialiased scroll-smooth",
+        fontSans.variable
+      )}
+      suppressHydrationWarning
+    >
+      <body>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <LoginDialogProvider>{children}</LoginDialogProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );
