@@ -7,6 +7,7 @@ import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
 import CodeDisplayBlock from "../code-display-block";
+import { MemoizedMarkdown } from "../memoized-markdown";
 import {
   ChatBubble,
   ChatBubbleAction,
@@ -14,7 +15,6 @@ import {
   ChatBubbleMessage,
 } from "../ui/chat/chat-bubble";
 import ChatInitialMessage from "./chat-initial-message";
-import MarkdownRenderer from "./markdown-renderer";
 
 type MessagesListProps = {
   messages: Message[];
@@ -64,8 +64,6 @@ function MessagesList({
     if (messages.length === 0) return;
 
     if (container && autoScrollEnabledRef.current) {
-      console.log(isAtBottom);
-
       container.scrollTo({
         top: container.scrollHeight,
         behavior: "smooth",
@@ -90,9 +88,13 @@ function MessagesList({
                   key={index}
                   variant={message.role == "user" ? "sent" : "received"}
                   layout={message.role == "user" ? "default" : "ai"}
-                  className="items-start"
+                  className="items-start text-foreground"
                 >
-                  <div className="pt-4">
+                  <div
+                    className={cn(
+                      message.role === "assistant" ? "pt-4" : "hidden"
+                    )}
+                  >
                     <ChatBubbleAvatar
                       src=""
                       fallback={message.role == "user" ? "👨🏽" : "🤖"}
@@ -108,16 +110,16 @@ function MessagesList({
                       .map((part: string, index: number) => {
                         if (index % 2 === 0) {
                           return (
-                            <MarkdownRenderer
-                              key={index}
-                              content={part}
+                            <MemoizedMarkdown
                               className={cn(
-                                "prose prose-neutral prose-invert max-w-none",
                                 message.role === "user"
-                                  ? "text-primary-foreground"
+                                  ? "text-foreground"
                                   : "",
                                 index % 2 === 0 ? "prose-p:mb-0" : ""
                               )}
+                              key={index}
+                              content={part}
+                              id={index.toString()}
                             />
                           );
                         } else {
@@ -171,4 +173,5 @@ function MessagesList({
     </div>
   );
 }
+
 export default memo(MessagesList);

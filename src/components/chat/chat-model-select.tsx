@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { setCookie } from "cookies-next";
+import { useShallow } from "zustand/react/shallow";
 
 import {
   Select,
@@ -9,34 +10,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const models = [
-  {
-    id: "gpt-4o",
-    name: "GPT-4o",
-  },
-  {
-    id: "gpt-4o-mini",
-    name: "GPT-4o Mini",
-  },
-  {
-    id: "claude-3-5-sonnet",
-    name: "Claude 3.5 Sonnet",
-  },
-];
+import { models } from "@/config/models";
+import { useChatStore } from "@/store/use-chat-store";
 
 export default function ChatModelSelect() {
-  const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
+  const { setModel, model } = useChatStore(
+    useShallow((state) => ({
+      setModel: state.setChatModel,
+      model: state.chatModel,
+    }))
+  );
+
+  function handleChange(value: string) {
+    setModel(value);
+    setCookie("chat-model", value);
+  }
 
   return (
-    <Select value={selectedModel} onValueChange={setSelectedModel}>
-      <SelectTrigger className="w-[180px]">
+    <Select value={model} onValueChange={handleChange}>
+      <SelectTrigger className="w-[210px]">
         <SelectValue placeholder="Selecione o modelo" />
       </SelectTrigger>
+
       <SelectContent>
         {models.map((model) => (
-          <SelectItem key={model.id} value={model.id}>
-            {model.name}
+          <SelectItem key={model.id} value={model.id} disabled={model.disabled}>
+            <div className="flex items-center gap-2">
+              <model.icon className="size-4 fill-foreground" />
+
+              {model.name}
+            </div>
           </SelectItem>
         ))}
       </SelectContent>

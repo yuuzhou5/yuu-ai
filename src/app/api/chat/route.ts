@@ -1,4 +1,4 @@
-import { convertToCoreMessages, StreamData, streamText } from "ai";
+import { convertToCoreMessages, createDataStreamResponse, streamText } from "ai";
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 
@@ -6,9 +6,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { threadMessagesSchema } from "@/lib/validation/thread-messages";
 
-import { generateThreadTitle } from "./generate-thread-title";
-
-import { openai } from "@ai-sdk/openai";
+import { registry } from "./registry";
 
 export const maxDuration = 59;
 
@@ -19,9 +17,7 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { success, data: parsedData } = z
-    .object({ id: z.string() })
-    .safeParse(session.user);
+  const { success, data: parsedData } = z.object({ id: z.string() }).safeParse(session.user);
 
   if (!success) {
     return new Response("Unauthorized", { status: 401 });
@@ -39,85 +35,78 @@ export async function POST(req: Request) {
 
   const { messages, ...body } = await req.json();
 
-  console.log(body);
-
-  const { threadId } = z
-    .object({ threadId: z.string().optional() })
+  const { threadId, model } = z
+    .object({ threadId: z.string().optional(), model: z.string() })
     .parse(body);
 
-  const data = new StreamData();
+  return createDataStreamResponse({
+    execute: (dataStream) => {
+      const result = streamText({
+        model: registry.languageModel(model),
+        messages: convertToCoreMessages(messages),
 
-  if (threadId) {
-    data.append({ threadId });
-  }
+        async onFinish({ text }) {
+          if (!threadId) {
+            const { id } = await prisma.thread.create({
+              data: {
+                messages: [messages[messages.length - 1], { role: "assistant", content: text }],
+                title: messages[messages.length - 1].content,
+                ownerId: user.id,
+                model,
+                totalTokens: 0,
+                totalCosts: 0,
+              },
+            });
 
-  const result = await streamText({
-    model: openai("gpt-4o-mini"),
-    messages: convertToCoreMessages(messages),
+            revalidateTag("threads");
 
-    async onFinish({ text }) {
-      if (!threadId) {
-        const title = await generateThreadTitle(messages[messages.length - 1]);
+            dataStream.writeData({ threadId: id });
 
-        const { id } = await prisma.thread.create({
-          data: {
-            messages: [
-              messages[messages.length - 1],
-              { role: "assistant", content: text },
-            ],
-            title,
-            ownerId: user.id,
-            model: "gpt-4o-mini",
-            totalTokens: 0,
-            totalCosts: 0,
-          },
-        });
+            return;
+          }
 
-        data.append({ threadId: id });
+          dataStream.writeData({ threadId });
 
-        return data.close();
-      }
+          const thread = await prisma.thread.findUnique({
+            where: {
+              id: threadId,
+            },
+          });
 
-      const thread = await prisma.thread.findUnique({
-        where: {
-          id: threadId,
+          if (!thread) {
+            console.log("Thread not found");
+
+            return;
+          }
+
+          const { success, data: storedMessages } = threadMessagesSchema.safeParse(thread.messages);
+
+          if (!success) {
+            console.log("Invalid messages");
+
+            return;
+          }
+
+          const currentMessages = messages[messages.length - 1];
+
+          const combinedMessages = [...storedMessages, currentMessages];
+
+          await prisma.thread.update({
+            where: {
+              id: threadId,
+            },
+            data: {
+              messages: [...combinedMessages, { role: "assistant", content: text }],
+            },
+          });
+
+          revalidateTag("threads");
         },
       });
 
-      if (!thread) {
-        console.log("Thread not found");
-
-        return data.close();
-      }
-
-      const { success, data: storedMessages } = threadMessagesSchema.safeParse(
-        thread.messages
-      );
-
-      if (!success) {
-        console.log("Invalid messages");
-
-        return data.close();
-      }
-
-      const currentMessages = messages[messages.length - 1];
-
-      const combinedMessages = [...storedMessages, currentMessages];
-
-      await prisma.thread.update({
-        where: {
-          id: threadId,
-        },
-        data: {
-          messages: [...combinedMessages, { role: "assistant", content: text }],
-        },
-      });
-
-      revalidateTag("threads");
-
-      data.close();
+      result.mergeIntoDataStream(dataStream);
     },
   });
 
-  return result.toDataStreamResponse({ data });
+  // return result.toDataStreamResponse({ data });
 }

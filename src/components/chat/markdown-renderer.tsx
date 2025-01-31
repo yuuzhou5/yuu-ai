@@ -15,4 +15,7 @@ function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   );
 }
 
-export default memo(MarkdownRenderer);
+export default memo(MarkdownRenderer, (prevProps, nextProps) => {
+  if (prevProps.content !== nextProps.content) return false;
+  return true;
+});

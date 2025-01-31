@@ -1,12 +1,13 @@
 import * as React from "react";
 
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea as _Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-interface ChatInputProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface ChatInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   maxHeight?: number;
 }
+
+const Textarea = React.memo(_Textarea);
 
 const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
   ({ className, maxHeight = 200, ...props }, ref) => {
@@ -62,6 +63,15 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 ChatInput.displayName = "ChatInput";
 
-const MemoizedChatInput = React.memo(ChatInput);
+const MemoizedChatInput = React.memo(ChatInput, (prevProps, nextProps) => {
+  if (prevProps.className !== nextProps.className) return false;
+  if (prevProps.maxHeight !== nextProps.maxHeight) return false;
+  if (prevProps.value !== nextProps.value) return false;
+  if (prevProps.placeholder !== nextProps.placeholder) return false;
+  if (prevProps.onChange !== nextProps.onChange) return false;
+  if (prevProps.onClick !== nextProps.onClick) return false;
+
+  return true;
+});
 
 export { MemoizedChatInput as ChatInput };

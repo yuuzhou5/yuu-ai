@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
 
-import { ThemeProvider } from "@/components/providers";
+import { ConfirmDialogProvider, ThemeProvider } from "@/components/providers";
 import { LoginDialogProvider } from "@/context/login-dialog-context";
 import { fontSans } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
@@ -29,14 +29,16 @@ export default function RootLayout({
     >
       <body>
         <SessionProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <LoginDialogProvider>{children}</LoginDialogProvider>
-          </ThemeProvider>
+          <ConfirmDialogProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <LoginDialogProvider>{children}</LoginDialogProvider>
+            </ThemeProvider>
+          </ConfirmDialogProvider>
         </SessionProvider>
       </body>
     </html>

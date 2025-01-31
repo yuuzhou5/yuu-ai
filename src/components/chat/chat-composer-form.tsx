@@ -1,15 +1,8 @@
 "use client";
 
-import { ArrowUp, Loader2, Mic, Paperclip, X } from "lucide-react";
+import { ArrowUp, Loader2, Paperclip, X } from "lucide-react";
 import Image from "next/image";
-import {
-  FormEvent,
-  KeyboardEvent,
-  memo,
-  RefObject,
-  useCallback,
-  useState,
-} from "react";
+import { FormEvent, KeyboardEvent, memo, RefObject, useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 
 import { uploadImage } from "@/app/api/uploadToAWS";
@@ -22,11 +15,9 @@ interface ChatComposerFormProps {
   handleSendMessage: (message: string) => Promise<void>;
 }
 
-function ChatComposerForm({
-  isLoading,
-  formRef,
-  handleSendMessage,
-}: ChatComposerFormProps) {
+const MemoizedButton = memo(Button);
+
+function ChatComposerForm({ isLoading, formRef, handleSendMessage }: ChatComposerFormProps) {
   const [input, setInput] = useState("");
 
   const [attachments, setAttachments] = useState<
@@ -59,9 +50,7 @@ function ChatComposerForm({
         );
       } catch (error) {
         console.error("Erro no upload:", error);
-        setAttachments((prev) =>
-          prev.filter((attachment) => attachment.file !== acceptedFiles[i])
-        );
+        setAttachments((prev) => prev.filter((attachment) => attachment.file !== acceptedFiles[i]));
       }
     }
   }, []);
@@ -119,9 +108,7 @@ function ChatComposerForm({
                     alt={attachment.file.name}
                     width={80}
                     height={80}
-                    className={`rounded ${
-                      attachment.uploading ? "opacity-50" : ""
-                    }`}
+                    className={`rounded ${attachment.uploading ? "opacity-50" : ""}`}
                   />
                   {attachment.uploading && (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -150,14 +137,12 @@ function ChatComposerForm({
           value={input}
           onKeyDown={handleKeyDown}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={
-            isDragActive ? "Solte as imagens aqui..." : "Enviar uma mensagem..."
-          }
+          placeholder={isDragActive ? "Solte as imagens aqui..." : "Enviar uma mensagem..."}
           className="rounded-lg bg-background border-0 shadow-none focus-visible:ring-0"
         />
 
         <div className="flex items-center p-3 pt-0">
-          <Button
+          <MemoizedButton
             type="button"
             variant="ghost"
             size="icon"
@@ -168,12 +153,7 @@ function ChatComposerForm({
           >
             <Paperclip className="size-4" />
             <span className="sr-only">Anexar arquivo</span>
-          </Button>
-
-          <Button type="button" variant="ghost" size="icon">
-            <Mic className="size-4" />
-            <span className="sr-only">Use Microphone</span>
-          </Button>
+          </MemoizedButton>
 
           <Button
             disabled={!input || isLoading}
@@ -190,4 +170,10 @@ function ChatComposerForm({
   );
 }
 
-export default memo(ChatComposerForm);
+export default memo(ChatComposerForm, (prevProps, nextProps) => {
+  if (prevProps.isLoading !== nextProps.isLoading) return false;
+  if (prevProps.handleSendMessage !== nextProps.handleSendMessage) return false;
+  if (prevProps.formRef !== nextProps.formRef) return false;
+
+  return true;
+});

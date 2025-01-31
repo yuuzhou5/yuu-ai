@@ -1,28 +1,40 @@
 "use client";
 
 import { Message, useChat } from "ai/react";
-import { useParams, useRouter } from "next/navigation";
+import { useSetCookie } from "cookies-next";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
+
+import { useChatStore } from "@/store/use-chat-store";
 
 import ChatComposerForm from "./chat-composer-form";
 import MessagesList from "./messages-list";
 
 type ChatProps = {
   initialMessages?: Message[];
+  model: string;
 };
 
-export default function Chat({ initialMessages }: ChatProps) {
+export default function Chat({ initialMessages, model }: ChatProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [threadId, setThreadId] = useState<string | undefined>();
 
   const params = useParams();
-  const router = useRouter();
 
-  const { messages, append, isLoading, reload, data, setMessages } = useChat({
+  const setCookie = useSetCookie();
+
+  const { setModel } = useChatStore(
+    useShallow((state) => ({
+      setModel: state.setChatModel,
+    }))
+  );
+
+  const { messages, append, isLoading, reload, data } = useChat({
     initialMessages,
+
     onResponse(response) {
       if (response) {
-        console.log(response);
         setIsGenerating(false);
       }
     },
@@ -57,6 +69,13 @@ export default function Chat({ initialMessages }: ChatProps) {
   }, [data, params]);
 
   useEffect(() => {
+    if (model) {
+      setModel(model);
+      setCookie("chat-model", model);
+    }
+  }, [model, setModel, setCookie]);
+
+  useEffect(() => {
     if (memoizedThreadId) {
       setThreadId(memoizedThreadId);
     }
@@ -64,37 +83,16 @@ export default function Chat({ initialMessages }: ChatProps) {
 
   useEffect(() => {
     if (messagesRef.current) {
-      console.log(messagesRef.current.scrollHeight);
-
       messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
   }, [messages]);
-
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const signal = searchParams.get("signal");
-
-    if (signal === "new-thread") {
-      setMessages([]);
-      setThreadId(undefined);
-
-      const { pathname } = window.location;
-      searchParams.delete("signal");
-
-      const newUrl = `${pathname}${
-        searchParams.toString() ? `?${searchParams.toString()}` : ""
-      }`;
-      window.history.replaceState({}, "", newUrl);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reload, router]);
 
   const handleSendMessage = async (message: string) => {
     setIsGenerating(true);
 
     append(
       { role: "user", content: message },
-      { allowEmptySubmit: false, body: { threadId } }
+      { allowEmptySubmit: false, body: { threadId, model } }
     );
   };
 
@@ -121,14 +119,12 @@ export default function Chat({ initialMessages }: ChatProps) {
   };
 
   const isNearBottom = (element: HTMLElement, threshold = 100) => {
-    return (
-      element.scrollTop + element.clientHeight >=
-      element.scrollHeight - threshold
-    );
+    return element.scrollTop + element.clientHeight >= element.scrollHeight - threshold;
   };
 
   useEffect(() => {
     const container = containerRef.current;
+
     if (container) {
       if (isNearBottom(container)) {
         container.scrollTo({
