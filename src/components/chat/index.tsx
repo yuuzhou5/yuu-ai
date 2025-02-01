@@ -49,7 +49,6 @@ export default function Chat({ initialMessages, model }: ChatProps) {
 
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-
   const containerRef = useRef<HTMLDivElement>(null);
 
   const memoizedThreadId = useMemo(() => {
@@ -119,7 +118,10 @@ export default function Chat({ initialMessages, model }: ChatProps) {
   };
 
   const isNearBottom = (element: HTMLElement, threshold = 100) => {
-    return element.scrollTop + element.clientHeight >= element.scrollHeight - threshold;
+    return (
+      element.scrollTop + element.clientHeight >=
+      element.scrollHeight - threshold
+    );
   };
 
   useEffect(() => {

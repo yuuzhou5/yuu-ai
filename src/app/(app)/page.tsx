@@ -7,5 +7,5 @@ export default async function Page() {
 
   const chatModel = cookiesStore.get("chat-model");
 
-  return <Chat model={chatModel?.value || "gpt-4o-mini"} />;
+  return <Chat model={chatModel?.value || "openai:gpt-4o-mini"} />;
 }

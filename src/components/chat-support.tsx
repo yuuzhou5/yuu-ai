@@ -1,25 +1,27 @@
 "use client";
 
+import { useChat } from "ai/react";
+import { Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 import {
   ChatBubble,
   ChatBubbleAvatar,
   ChatBubbleMessage,
 } from "@/components/ui/chat/chat-bubble";
 import { ChatInput } from "@/components/ui/chat/chat-input";
+import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import {
   ExpandableChat,
-  ExpandableChatHeader,
   ExpandableChatBody,
   ExpandableChatFooter,
+  ExpandableChatHeader,
 } from "@/components/ui/chat/expandable-chat";
-import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
-import { Button } from "./ui/button";
-import { Send } from "lucide-react";
-import { useChat } from "ai/react";
-import { useEffect, useRef, useState } from "react";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+
 import CodeDisplayBlock from "./code-display-block";
+import { Button } from "./ui/button";
 
 export default function ChatSupport() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -85,7 +87,7 @@ export default function ChatSupport() {
           <ChatBubble variant="received">
             <ChatBubbleAvatar src="" fallback="🤖" />
             <ChatBubbleMessage>
-              Hello! I'm the AI assistant. How can I help you today?
+              Hello! I&apos;m the AI assistant. How can I help you today?
             </ChatBubbleMessage>
           </ChatBubble>
 

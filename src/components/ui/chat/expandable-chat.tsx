@@ -1,9 +1,10 @@
 "use client";
 
+import { MessageCircle,X } from "lucide-react";
 import React, { useRef, useState } from "react";
-import { X, MessageCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export type ChatPosition = "bottom-right" | "bottom-left";
 export type ChatSize = "sm" | "md" | "lg" | "xl" | "full";
@@ -147,7 +148,7 @@ ExpandableChatToggle.displayName = "ExpandableChatToggle";
 
 export {
   ExpandableChat,
-  ExpandableChatHeader,
   ExpandableChatBody,
   ExpandableChatFooter,
+  ExpandableChatHeader,
 };

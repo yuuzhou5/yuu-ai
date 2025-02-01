@@ -1,10 +1,12 @@
 "use client";
-import { CheckIcon, CopyIcon } from "@radix-ui/react-icons";
+import { useTheme } from "next-themes";
 import React from "react";
 import { CodeBlock, dracula, github } from "react-code-blocks";
-import { Button } from "./ui/button";
 import { toast } from "sonner";
-import { useTheme } from "next-themes";
+
+import { Button } from "./ui/button";
+
+import { CheckIcon, CopyIcon } from "@radix-ui/react-icons";
 
 interface ButtonCodeblockProps {
   code: string;
@@ -14,6 +16,8 @@ interface ButtonCodeblockProps {
 export default function CodeDisplayBlock({ code, lang }: ButtonCodeblockProps) {
   const [isCopied, setisCopied] = React.useState(false);
   const { theme } = useTheme();
+
+  console.log({ lang });
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(code);

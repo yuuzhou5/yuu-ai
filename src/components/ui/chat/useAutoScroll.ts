@@ -1,3 +1,4 @@
+// eslint-ignore
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ScrollState {
@@ -101,7 +102,7 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}) {
     const element = scrollRef.current;
     if (!element) return;
 
-    const resizeObserver = new ResizeObserver((a) => {
+    const resizeObserver = new ResizeObserver(() => {
       if (scrollState.autoScrollEnabled) {
         scrollToBottom(true);
       }
