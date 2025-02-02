@@ -16,7 +16,7 @@ model User {
 
   accounts Account[]
   sessions Session[]
-  Thread   Thread[]
+  Chat     Chat[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -64,16 +64,28 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Thread {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  title    String
-  owner    User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  ownerId  String @db.ObjectId
-  model    String
-  messages Json
+model Chat {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  title  String
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+  model  String
+
+  messages Message[]
 
   totalTokens Int
   totalCosts  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  role    String
+  content Json
+  chatId  String @db.ObjectId
+  chat    Chat   @relation(fields: [chatId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
