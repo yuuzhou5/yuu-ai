@@ -1,66 +1,76 @@
 "use client";
 
+import { Attachment } from "ai";
 import { ArrowUp, Loader2, Paperclip, X } from "lucide-react";
 import Image from "next/image";
-import { FormEvent, KeyboardEvent, memo, RefObject, useCallback, useState } from "react";
+import {
+  FormEvent,
+  KeyboardEvent,
+  memo,
+  RefObject,
+  useCallback,
+  useState,
+} from "react";
 import { useDropzone } from "react-dropzone";
 
-import { uploadImage } from "@/app/api/uploadToAWS";
 import { Button } from "@/components/ui/button";
 import { ChatInput } from "@/components/ui/chat/chat-input";
+
+import { upload } from "@vercel/blob/client";
 
 interface ChatComposerFormProps {
   isLoading: boolean;
   formRef: RefObject<HTMLFormElement | null>;
-  handleSendMessage: (message: string) => Promise<void>;
+  handleSendMessage: (
+    message: string,
+    attachment: Attachment[]
+  ) => Promise<void>;
 }
 
 const MemoizedButton = memo(Button);
 
-function ChatComposerForm({ isLoading, formRef, handleSendMessage }: ChatComposerFormProps) {
+function ChatComposerForm({
+  isLoading,
+  formRef,
+  handleSendMessage,
+}: ChatComposerFormProps) {
   const [input, setInput] = useState("");
-
   const [attachments, setAttachments] = useState<
     Array<{
       file: File;
       uploading: boolean;
-      url?: string;
+      url: string;
     }>
   >([]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const newAttachments = acceptedFiles.map((file) => ({
-      file,
-      uploading: true,
-    }));
+    const file = acceptedFiles[0];
 
-    setAttachments((prev) => [...prev, ...newAttachments]);
+    setAttachments((prev) => [...prev, { file, uploading: true, url: "" }]);
 
-    for (let i = 0; i < acceptedFiles.length; i++) {
-      try {
-        const url = await uploadImage(acceptedFiles[i]);
+    try {
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/threads/upload",
+        onUploadProgress: (progress) => console.log(progress),
+      });
 
-        setAttachments((prev) =>
-          prev.map((attachment) => {
-            if (attachment.file === acceptedFiles[i]) {
-              return { ...attachment, uploading: false, url };
-            }
-            return attachment;
-          })
-        );
-      } catch (error) {
-        console.error("Erro no upload:", error);
-        setAttachments((prev) => prev.filter((attachment) => attachment.file !== acceptedFiles[i]));
-      }
+      setAttachments((prev) =>
+        prev.map((attachment) =>
+          attachment.file === file
+            ? { ...attachment, uploading: false, url: blob.url }
+            : attachment
+        )
+      );
+    } catch (error) {
+      console.error("Error uploading:", error);
+      setAttachments((prev) =>
+        prev.filter((attachment) => attachment.file !== file)
+      );
     }
   }, []);
 
-  const {
-    getRootProps,
-    getInputProps,
-    isDragActive,
-    // open
-  } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     noClick: true,
     accept: {
@@ -77,7 +87,10 @@ function ChatComposerForm({ isLoading, formRef, handleSendMessage }: ChatCompose
 
     setInput("");
 
-    await handleSendMessage(input);
+    await handleSendMessage(
+      input,
+      attachments.map((attachment) => ({ url: attachment.url }))
+    );
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -104,11 +117,13 @@ function ChatComposerForm({ isLoading, formRef, handleSendMessage }: ChatCompose
               <div key={index} className="relative group">
                 <div className="relative">
                   <Image
-                    src={URL.createObjectURL(attachment.file)}
+                    src={attachment.url || URL.createObjectURL(attachment.file)}
                     alt={attachment.file.name}
                     width={80}
                     height={80}
-                    className={`rounded ${attachment.uploading ? "opacity-50" : ""}`}
+                    className={`rounded object-cover aspect-square ${
+                      attachment.uploading ? "opacity-50" : ""
+                    }`}
                   />
                   {attachment.uploading && (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -137,33 +152,35 @@ function ChatComposerForm({ isLoading, formRef, handleSendMessage }: ChatCompose
           value={input}
           onKeyDown={handleKeyDown}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={isDragActive ? "Solte as imagens aqui..." : "Enviar uma mensagem..."}
+          placeholder={
+            isDragActive ? "Solte as imagens aqui..." : "Enviar uma mensagem..."
+          }
           className="rounded-lg bg-background border-0 shadow-none focus-visible:ring-0"
         />
 
-        <div className="flex items-center p-3 pt-0">
+        <div className="flex items-center justify-end p-3 pt-0 gap-2">
           <MemoizedButton
             type="button"
             variant="ghost"
             size="icon"
+            className="rounded-full"
             onClick={(e) => {
               e.stopPropagation();
-              // open();
+              open();
             }}
           >
             <Paperclip className="size-4" />
             <span className="sr-only">Anexar arquivo</span>
           </MemoizedButton>
 
-          <Button
+          <MemoizedButton
             disabled={!input || isLoading}
             type="submit"
-            size="sm"
-            className="ml-auto gap-1.5"
+            size="icon"
+            className="gap-1.5 rounded-full"
           >
-            Enviar
             <ArrowUp className="size-4" />
-          </Button>
+          </MemoizedButton>
         </div>
       </form>
     </div>

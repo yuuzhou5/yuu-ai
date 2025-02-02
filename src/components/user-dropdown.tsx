@@ -1,8 +1,10 @@
 "use client";
 
+import { MoonIcon, SunIcon } from "lucide-react";
 import Image from "next/image";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { z } from "zod";
 
 import {
@@ -29,6 +31,8 @@ const userSchema = z.object({
 
 export function UserDropdown({ session }: UserDropdownProps) {
   const user = userSchema.parse(session).user;
+
+  const { setTheme, theme } = useTheme();
 
   return (
     <DropdownMenu>
@@ -60,6 +64,20 @@ export function UserDropdown({ session }: UserDropdownProps) {
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          className="py-2.5 cursor-pointer text-muted-foreground font-medium"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        >
+          <SunIcon className="size-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 mr-2" />
+          <MoonIcon className="absolute size-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 mr-2" />
+
+          <span>Mudar tema</span>
+
+          <span className="sr-only">Change theme</span>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

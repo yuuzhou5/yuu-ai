@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
 
-import { ConfirmDialogProvider, ThemeProvider } from "@/components/providers";
+import {
+  ConfirmDialogProvider,
+  QueryProvider,
+  ThemeProvider,
+} from "@/components/providers";
+import { Toaster } from "@/components/ui/sonner";
 import { LoginDialogProvider } from "@/context/login-dialog-context";
 import { fontSans } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
@@ -29,16 +34,22 @@ export default function RootLayout({
     >
       <body>
         <SessionProvider>
-          <ConfirmDialogProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <LoginDialogProvider>{children}</LoginDialogProvider>
-            </ThemeProvider>
-          </ConfirmDialogProvider>
+          <QueryProvider>
+            <ConfirmDialogProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                // disableTransitionOnChange
+              >
+                <LoginDialogProvider>
+                  {children}
+
+                  <Toaster richColors />
+                </LoginDialogProvider>
+              </ThemeProvider>
+            </ConfirmDialogProvider>
+          </QueryProvider>
         </SessionProvider>
       </body>
     </html>

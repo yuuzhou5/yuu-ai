@@ -1,4 +1,9 @@
-import { convertToCoreMessages, createDataStreamResponse, streamText } from "ai";
+import {
+  convertToCoreMessages,
+  createDataStreamResponse,
+  smoothStream,
+  streamText,
+} from "ai";
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 
@@ -17,7 +22,9 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { success, data: parsedData } = z.object({ id: z.string() }).safeParse(session.user);
+  const { success, data: parsedData } = z
+    .object({ id: z.string() })
+    .safeParse(session.user);
 
   if (!success) {
     return new Response("Unauthorized", { status: 401 });
@@ -35,6 +42,8 @@ export async function POST(req: Request) {
 
   const { messages, ...body } = await req.json();
 
+  console.log(messages);
+
   const { threadId, model } = z
     .object({ threadId: z.string().optional(), model: z.string() })
     .parse(body);
@@ -44,12 +53,19 @@ export async function POST(req: Request) {
       const result = streamText({
         model: registry.languageModel(model),
         messages: convertToCoreMessages(messages),
+        experimental_transform: smoothStream({
+          delayInMs: 15,
+          chunking: "word",
+        }),
 
         async onFinish({ text }) {
           if (!threadId) {
             const { id } = await prisma.thread.create({
               data: {
-                messages: [messages[messages.length - 1], { role: "assistant", content: text }],
+                messages: [
+                  messages[messages.length - 1],
+                  { role: "assistant", content: text },
+                ],
                 title: messages[messages.length - 1].content,
                 ownerId: user.id,
                 model,
@@ -79,7 +95,8 @@ export async function POST(req: Request) {
             return;
           }
 
-          const { success, data: storedMessages } = threadMessagesSchema.safeParse(thread.messages);
+          const { success, data: storedMessages } =
+            threadMessagesSchema.safeParse(thread.messages);
 
           if (!success) {
             console.log("Invalid messages");
@@ -96,7 +113,10 @@ export async function POST(req: Request) {
               id: threadId,
             },
             data: {
-              messages: [...combinedMessages, { role: "assistant", content: text }],
+              messages: [
+                ...combinedMessages,
+                { role: "assistant", content: text },
+              ],
             },
           });
 
@@ -107,6 +127,4 @@ export async function POST(req: Request) {
       result.mergeIntoDataStream(dataStream);
     },
   });
-
-  // return result.toDataStreamResponse({ data });
 }

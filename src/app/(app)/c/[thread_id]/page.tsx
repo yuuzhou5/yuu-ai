@@ -11,6 +11,20 @@ type ThreadPageProps = {
   }>;
 };
 
+export async function generateMetadata({ params }: ThreadPageProps) {
+  const { thread_id } = await params;
+
+  const thread = await prisma.thread.findUnique({
+    where: {
+      id: thread_id,
+    },
+  });
+
+  return {
+    title: thread?.title,
+  };
+}
+
 export default async function ThreadPage({ params }: ThreadPageProps) {
   const { thread_id } = await params;
 
@@ -24,11 +38,15 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
     return notFound();
   }
 
-  const { success, data: storedMessages } = threadMessagesSchema.safeParse(thread.messages);
+  const { success, data: storedMessages } = threadMessagesSchema.safeParse(
+    thread.messages
+  );
 
   if (!success) {
     return notFound();
   }
 
-  return <Chat initialMessages={storedMessages as Message[]} model={thread.model} />;
+  return (
+    <Chat initialMessages={storedMessages as Message[]} model={thread.model} />
+  );
 }

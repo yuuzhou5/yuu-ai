@@ -19,6 +19,7 @@ export default function HeaderSidebarTrigger() {
     <Button
       variant="ghost"
       size="icon"
+      className="size-7"
       onClick={() => {
         open();
       }}

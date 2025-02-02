@@ -3,6 +3,7 @@ import { RefreshCcw, Volume2 } from "lucide-react";
 import { CopyIcon } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { useRef } from "react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ import {
   ChatBubbleAvatar,
   ChatBubbleMessage,
 } from "../ui/chat/chat-bubble";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import ChatInitialMessage from "./chat-initial-message";
 
 type MessagesListProps = {
@@ -24,18 +26,47 @@ type MessagesListProps = {
 
 const ChatAiIcons = [
   {
+    id: "copy",
     icon: CopyIcon,
-    label: "Copy",
+    label: "Copiar",
   },
   {
+    id: "regenerate",
     icon: RefreshCcw,
-    label: "Refresh",
+    label: "Gerar novamente",
   },
   {
+    id: "volume",
     icon: Volume2,
-    label: "Volume",
+    label: "Ler em voz alta",
   },
 ];
+
+function RawMessageContent({ message }: { message: Message }) {
+  return message.content.split("```").map((part: string, index: number) => {
+    if (index % 2 === 0) {
+      return (
+        <MemoizedMarkdown
+          className={cn(
+            message.role === "user" ? "text-foreground" : "",
+            index % 2 === 0 ? "" : ""
+          )}
+          key={index}
+          content={part}
+          id={index.toString()}
+        />
+      );
+    } else {
+      return (
+        <pre className="whitespace-pre-wrap pt-2" key={index}>
+          <CodeDisplayBlock code={part} lang="" />
+        </pre>
+      );
+    }
+  });
+}
+
+const MessageContent = memo(RawMessageContent);
 
 function MessagesList({
   messages,
@@ -105,34 +136,7 @@ function MessagesList({
                     style={{ whiteSpace: "normal" }}
                     className="border-t-0"
                   >
-                    {message.content
-                      .split("```")
-                      .map((part: string, index: number) => {
-                        if (index % 2 === 0) {
-                          return (
-                            <MemoizedMarkdown
-                              className={cn(
-                                message.role === "user"
-                                  ? "text-foreground"
-                                  : "",
-                                index % 2 === 0 ? "prose-p:mb-0" : ""
-                              )}
-                              key={index}
-                              content={part}
-                              id={index.toString()}
-                            />
-                          );
-                        } else {
-                          return (
-                            <pre
-                              className="whitespace-pre-wrap pt-2"
-                              key={index}
-                            >
-                              <CodeDisplayBlock code={part} lang="" />
-                            </pre>
-                          );
-                        }
-                      })}
+                    <MessageContent message={message} />
 
                     {message.role === "assistant" &&
                       messages.length - 1 === index && (
@@ -142,15 +146,28 @@ function MessagesList({
                               {ChatAiIcons.map((icon, iconIndex) => {
                                 const Icon = icon.icon;
                                 return (
-                                  <ChatBubbleAction
-                                    variant="outline"
-                                    className="size-5"
-                                    key={iconIndex}
-                                    icon={<Icon className="size-3" />}
-                                    onClick={() =>
-                                      handleActionClick(icon.label, index)
-                                    }
-                                  />
+                                  <Tooltip key={iconIndex}>
+                                    <TooltipTrigger asChild>
+                                      <ChatBubbleAction
+                                        variant="outline"
+                                        className="size-5"
+                                        icon={<Icon className="size-3" />}
+                                        onClick={() => {
+                                          handleActionClick(icon.id, index);
+
+                                          if (icon.id === "copy") {
+                                            toast.success("Copiado!", {
+                                              position: "top-center",
+                                            });
+                                          }
+                                        }}
+                                      />
+                                    </TooltipTrigger>
+
+                                    <TooltipContent>
+                                      {icon.label}
+                                    </TooltipContent>
+                                  </Tooltip>
                                 );
                               })}
                             </>

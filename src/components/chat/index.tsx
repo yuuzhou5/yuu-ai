@@ -1,8 +1,9 @@
 "use client";
 
+import { Attachment } from "ai";
 import { Message, useChat } from "ai/react";
 import { useSetCookie } from "cookies-next";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -10,6 +11,8 @@ import { useChatStore } from "@/store/use-chat-store";
 
 import ChatComposerForm from "./chat-composer-form";
 import MessagesList from "./messages-list";
+
+import { useQueryClient } from "@tanstack/react-query";
 
 type ChatProps = {
   initialMessages?: Message[];
@@ -21,8 +24,9 @@ export default function Chat({ initialMessages, model }: ChatProps) {
   const [threadId, setThreadId] = useState<string | undefined>();
 
   const params = useParams();
-
+  const router = useRouter();
   const setCookie = useSetCookie();
+  const queryClient = useQueryClient();
 
   const { setModel } = useChatStore(
     useShallow((state) => ({
@@ -36,6 +40,8 @@ export default function Chat({ initialMessages, model }: ChatProps) {
     onResponse(response) {
       if (response) {
         setIsGenerating(false);
+
+        console.log(`generation complete: ${data}`);
       }
     },
     onError(error) {
@@ -77,7 +83,12 @@ export default function Chat({ initialMessages, model }: ChatProps) {
   useEffect(() => {
     if (memoizedThreadId) {
       setThreadId(memoizedThreadId);
+
+      queryClient.invalidateQueries({ queryKey: ["threads"] });
+
+      router.push(`/c/${memoizedThreadId}`);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memoizedThreadId]);
 
   useEffect(() => {
@@ -86,22 +97,29 @@ export default function Chat({ initialMessages, model }: ChatProps) {
     }
   }, [messages]);
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (
+    message: string,
+    attachment?: Attachment[]
+  ) => {
     setIsGenerating(true);
 
     append(
-      { role: "user", content: message },
-      { allowEmptySubmit: false, body: { threadId, model } }
+      { role: "user", content: message, experimental_attachments: attachment },
+      {
+        allowEmptySubmit: false,
+        body: { threadId, model },
+        // experimental_attachments: attachment,
+      }
     );
   };
 
   const handleActionClick = async (action: string, messageIndex: number) => {
     console.log("Action clicked:", action, "Message index:", messageIndex);
 
-    if (action === "Refresh") {
+    if (action === "regenerate") {
       setIsGenerating(true);
       try {
-        await reload();
+        await reload({ body: { threadId, model } });
       } catch (error) {
         console.error("Error reloading:", error);
       } finally {
@@ -109,7 +127,7 @@ export default function Chat({ initialMessages, model }: ChatProps) {
       }
     }
 
-    if (action === "Copy") {
+    if (action === "copy") {
       const message = messages[messageIndex];
       if (message && message.role === "assistant") {
         navigator.clipboard.writeText(message.content);

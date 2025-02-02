@@ -14,6 +14,12 @@ export const models = [
     disabled: false,
   },
   {
+    id: "openai:o3-mini",
+    name: "o3-mini",
+    icon: Icons.OpenAI,
+    disabled: false,
+  },
+  {
     id: "deepseek:deepseek-reasoner",
     name: "DeepSeek-R1",
     icon: Icons.DeepSeek,
