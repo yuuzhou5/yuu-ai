@@ -110,7 +110,7 @@ export async function POST(req: Request) {
         tools: {
           getWeather,
         },
-        onFinish: async ({ response, reasoning }) => {
+        onFinish: async ({ response }) => {
           if (session.user?.id) {
             try {
               const responseMessagesWithoutIncompleteToolCalls =
