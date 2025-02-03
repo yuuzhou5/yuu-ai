@@ -1,9 +1,8 @@
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
 import Chat from "@/components/chat";
-import { DEFAULT_MODEL_NAME, models } from "@/lib/ai/models";
+import { DEFAULT_MODEL_NAME } from "@/lib/ai/models";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
 import { prisma } from "@/lib/prisma";
 import { convertToUIMessages } from "@/lib/utils";
@@ -43,9 +42,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
     id: chatId,
   });
 
-  const cookieStore = await cookies();
-  const modelIdFromCookie = cookieStore.get("model-id")?.value;
-  const selectedModelId = models.find((model) => model.id === modelIdFromCookie)?.id || DEFAULT_MODEL_NAME;
+  const selectedModelId = chat.model || DEFAULT_MODEL_NAME;
 
   return (
     <Chat

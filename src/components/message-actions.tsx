@@ -14,15 +14,21 @@ type MessageActionsProps = {
   isLoading: boolean;
 };
 
-export function PureMessageActions({ message, isLoading }: MessageActionsProps) {
+export function PureMessageActions({
+  message,
+  isLoading,
+}: MessageActionsProps) {
   const [, copyToClipboard] = useCopyToClipboard();
 
   if (isLoading) return null;
   if (message.role === "user") return null;
-  if (message.toolInvocations && message.toolInvocations.length > 0) return null;
+  if (message.toolInvocations && message.toolInvocations.length > 0)
+    return null;
 
   const { success, data } = z
-    .array(z.object({ latency: z.number().optional(), model: z.string().optional() }))
+    .array(
+      z.object({ latency: z.number().optional(), model: z.string().optional() })
+    )
     .safeParse(message.annotations);
 
   return (
@@ -65,15 +71,18 @@ export function PureMessageActions({ message, isLoading }: MessageActionsProps) 
 
       {success && data[0] && (
         <span className="text-muted-foreground text-xs">
-          Gerado com &quot;{data[0].model}&quot; em {data[0].latency} ms
+          {data[0].model} &#183; {data[0].latency} ms
         </span>
       )}
     </div>
   );
 }
 
-export const MessageActions = memo(PureMessageActions, (prevProps, nextProps) => {
-  if (prevProps.isLoading !== nextProps.isLoading) return false;
+export const MessageActions = memo(
+  PureMessageActions,
+  (prevProps, nextProps) => {
+    if (prevProps.isLoading !== nextProps.isLoading) return false;
 
-  return true;
-});
+    return true;
+  }
+);

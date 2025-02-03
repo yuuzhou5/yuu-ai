@@ -10,6 +10,7 @@ const config: Config = {
   theme: {
     fontFamily: {
       sans: ["var(--font-sans)"],
+      mono: ["var(--font-geist-mono)"],
     },
     extend: {
       backgroundImage: {

@@ -19,7 +19,8 @@ export function SidebarToggle({}: ComponentProps<typeof SidebarTrigger>) {
         <Button
           onClick={toggleSidebar}
           variant="outline"
-          className="md:px-2 md:h-fit"
+          size="icon"
+          // className="md:px-2 md:h-fit"
         >
           <PanelLeft className="size-4" />
         </Button>

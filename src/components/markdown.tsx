@@ -6,8 +6,6 @@ import remarkGfm from "remark-gfm";
 import CodeDisplayBlock from "./code-display-block";
 
 const components: Partial<Components> = {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
   code: CodeDisplayBlock,
   pre: ({ children }) => <>{children}</>,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -47,7 +45,12 @@ const components: Partial<Components> = {
     return (
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
-      <Link className="text-blue-500 hover:underline" target="_blank" rel="noreferrer" {...props}>
+      <Link
+        className="text-blue-500 hover:underline"
+        target="_blank"
+        rel="noreferrer"
+        {...props}
+      >
         {children}
       </Link>
     );
@@ -112,4 +115,7 @@ const NonMemoizedMarkdown = ({ children }: { children: string }) => {
   );
 };
 
-export const Markdown = memo(NonMemoizedMarkdown, (prevProps, nextProps) => prevProps.children === nextProps.children);
+export const Markdown = memo(
+  NonMemoizedMarkdown,
+  (prevProps, nextProps) => prevProps.children === nextProps.children
+);

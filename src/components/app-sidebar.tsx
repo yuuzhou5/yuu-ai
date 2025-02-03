@@ -4,7 +4,13 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { User } from "next-auth";
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenuButton } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenuButton,
+} from "@/components/ui/sidebar";
 
 import SidebarHistory from "./sidebar-history";
 import { Button } from "./ui/button";
@@ -15,12 +21,20 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   return (
     <Sidebar>
       <SidebarHeader>
-        <Button asChild>
+        <div className="flex justify-between items-center">
           <Link href="/">
-            <PlusIcon className="size-5 mr-1" />
-            <span>Novo chat</span>
+            <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
+              Yuu AI
+            </span>
           </Link>
-        </Button>
+
+          <Button asChild>
+            <Link href="/">
+              <PlusIcon className="size-5 mr-1" />
+              <span>Novo chat</span>
+            </Link>
+          </Button>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>

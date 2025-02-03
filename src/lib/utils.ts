@@ -1,6 +1,13 @@
-import { CoreAssistantMessage, CoreToolMessage, JSONValue, Message, ToolInvocation } from "ai";
+import {
+  CoreAssistantMessage,
+  CoreToolMessage,
+  JSONValue,
+  Message,
+  ToolInvocation,
+} from "ai";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { z } from "zod";
 
 import { Message as PrismaMessage } from "@prisma/client";
 
@@ -25,7 +32,9 @@ export const fetcher = async (url: string) => {
   const res = await fetch(url);
 
   if (!res.ok) {
-    const error = new Error("An error occurred while fetching the data.") as ApplicationError;
+    const error = new Error(
+      "An error occurred while fetching the data."
+    ) as ApplicationError;
 
     error.info = await res.json();
     error.status = res.status;
@@ -51,7 +60,9 @@ export function sanitizeUIMessages(messages: Array<Message>): Array<Message> {
     }
 
     const sanitizedToolInvocations = message.toolInvocations.filter(
-      (toolInvocation) => toolInvocation.state === "result" || toolResultIds.includes(toolInvocation.toolCallId)
+      (toolInvocation) =>
+        toolInvocation.state === "result" ||
+        toolResultIds.includes(toolInvocation.toolCallId)
     );
 
     return {
@@ -61,7 +72,9 @@ export function sanitizeUIMessages(messages: Array<Message>): Array<Message> {
   });
 
   return messagesBySanitizedToolInvocations.filter(
-    (message) => message.content.length > 0 || (message.toolInvocations && message.toolInvocations.length > 0)
+    (message) =>
+      message.content.length > 0 ||
+      (message.toolInvocations && message.toolInvocations.length > 0)
   );
 }
 
@@ -73,7 +86,9 @@ export function getMostRecentUserMessage(messages: Array<Message>) {
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
 
-export function sanitizeResponseMessages(messages: Array<ResponseMessage>): Array<ResponseMessage> {
+export function sanitizeResponseMessages(
+  messages: Array<ResponseMessage>
+): Array<ResponseMessage> {
   const toolResultIds: Array<string> = [];
 
   for (const message of messages) {
@@ -91,6 +106,8 @@ export function sanitizeResponseMessages(messages: Array<ResponseMessage>): Arra
 
     if (typeof message.content === "string") return message;
 
+    // if (Array.isArray(message.content)) return message;
+
     const sanitizedContent = message.content.filter((content) =>
       content.type === "tool-call"
         ? toolResultIds.includes(content.toolCallId)
@@ -105,7 +122,9 @@ export function sanitizeResponseMessages(messages: Array<ResponseMessage>): Arra
     };
   });
 
-  return messagesBySanitizedContent.filter((message) => message.content.length > 0);
+  return messagesBySanitizedContent.filter(
+    (message) => message.content.length > 0
+  );
 }
 
 function addToolMessageToChat({
@@ -120,7 +139,9 @@ function addToolMessageToChat({
       return {
         ...message,
         toolInvocations: message.toolInvocations.map((toolInvocation) => {
-          const toolResult = toolMessage.content.find((tool) => tool.toolCallId === toolInvocation.toolCallId);
+          const toolResult = toolMessage.content.find(
+            (tool) => tool.toolCallId === toolInvocation.toolCallId
+          );
 
           if (toolResult) {
             return {
@@ -177,14 +198,35 @@ export function convertToUIMessages(messages: Array<PrismaMessage>) {
       }
     }
 
+    const attachmentsSchema = z.array(
+      z.object({
+        url: z.string().url(),
+        name: z.string(),
+        contentType: z.string(),
+      })
+    );
+
+    const { data } = attachmentsSchema.safeParse(
+      message.experimental_attachments
+    );
+
     chatMessages.push({
       id: message.id,
       role: message.role as Message["role"],
       content: textContent,
       toolInvocations,
       annotations: message.annotations as JSONValue[],
+      experimental_attachments: data,
     });
 
     return chatMessages;
   }, []);
+}
+
+export async function copyToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (err) {
+    console.error("Erro ao copiar: ", err);
+  }
 }

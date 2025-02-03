@@ -2,7 +2,7 @@
 
 import type { Attachment, Message } from "ai";
 import { useChat } from "ai/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSWRConfig } from "swr";
 
 import { generateUUID } from "@/lib/utils";
@@ -18,10 +18,25 @@ type ChatProps = {
   isReadonly: boolean;
 };
 
-export default function Chat({ id, selectedModelId, isReadonly, initialMessages }: ChatProps) {
+export default function Chat({
+  id,
+  selectedModelId,
+  isReadonly,
+  initialMessages,
+}: ChatProps) {
   const { mutate } = useSWRConfig();
 
-  const { messages, setMessages, handleSubmit, input, setInput, append, isLoading, stop, reload } = useChat({
+  const {
+    messages,
+    setMessages,
+    handleSubmit,
+    input,
+    setInput,
+    append,
+    isLoading,
+    stop,
+    reload,
+  } = useChat({
     id,
     body: { id, modelId: selectedModelId },
     initialMessages,
@@ -34,6 +49,10 @@ export default function Chat({ id, selectedModelId, isReadonly, initialMessages 
   });
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
+
+  useEffect(() => {
+    // console.log(selectedModelId);
+  }, []);
 
   return (
     <div className="flex flex-col min-w-0 h-dvh bg-background">
@@ -62,6 +81,7 @@ export default function Chat({ id, selectedModelId, isReadonly, initialMessages 
             messages={messages}
             setMessages={setMessages}
             append={append}
+            selectedModelId={selectedModelId}
           />
         )}
       </form>

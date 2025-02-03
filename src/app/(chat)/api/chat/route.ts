@@ -1,13 +1,27 @@
-import { createDataStreamResponse, type Message, smoothStream, streamText } from "ai";
+import {
+  createDataStreamResponse,
+  type Message,
+  smoothStream,
+  streamText,
+} from "ai";
 
-import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
+// import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import { auth } from "@/auth";
 import { modelRegistry } from "@/lib/ai";
 import { models } from "@/lib/ai/models";
 import { systemPrompt } from "@/lib/ai/prompts";
 import { getWeather } from "@/lib/ai/tools/get-weather";
-import { deleteChatById, getChatById, saveChat, saveMessages } from "@/lib/db/queries";
-import { generateUUID, getMostRecentUserMessage, sanitizeResponseMessages } from "@/lib/utils";
+import {
+  deleteChatById,
+  getChatById,
+  saveChat,
+  saveMessages,
+} from "@/lib/db/queries";
+import {
+  generateUUID,
+  getMostRecentUserMessage,
+  sanitizeResponseMessages,
+} from "@/lib/utils";
 
 import { JsonValue } from "@prisma/client/runtime/library";
 
@@ -21,9 +35,16 @@ const allTools: AllowedTools[] = [...weatherTools];
 export async function POST(req: Request) {
   const start = Date.now();
 
-  const { id, messages, modelId }: { id: string; messages: Array<Message>; modelId: string } = await req.json();
+  const {
+    id,
+    messages,
+    modelId,
+  }: { id: string; messages: Array<Message>; modelId: string } =
+    await req.json();
 
+  console.time("session");
   const session = await auth();
+  console.timeEnd("session");
 
   if (!session || !session.user || !session.user.id) {
     return new Response("Unauthorized", { status: 401 });
@@ -41,25 +62,39 @@ export async function POST(req: Request) {
     return new Response("No user message found", { status: 400 });
   }
 
+  console.time("getChatById");
   const chat = await getChatById({ id });
+  console.timeEnd("getChatById");
 
+  console.time("saveChat");
   if (!chat) {
-    const title = await generateTitleFromUserMessage({ message: userMessage });
+    // const title = await generateTitleFromUserMessage({ message: userMessage });
 
     await saveChat({
       id,
       userId: session.user.id,
-      title,
+      title: userMessage.content,
       model: model.id,
     });
   }
 
   await saveMessages({
-    messages: [{ ...userMessage, chatId: id, annotations: [] }],
+    messages: [
+      {
+        ...userMessage,
+        chatId: id,
+        annotations: [],
+        experimental_attachments:
+          userMessage.experimental_attachments as unknown as JsonValue[],
+      },
+    ],
   });
+  console.timeEnd("saveChat");
 
   return createDataStreamResponse({
     execute: (dataStream) => {
+      console.log(model.apiIdentifier);
+
       const result = streamText({
         model: modelRegistry.languageModel(model.apiIdentifier),
         system: systemPrompt,
@@ -75,25 +110,32 @@ export async function POST(req: Request) {
         tools: {
           getWeather,
         },
-        onFinish: async ({ response }) => {
+        onFinish: async ({ response, reasoning }) => {
           if (session.user?.id) {
             try {
-              const timeTaken = Date.now() - start;
-              const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(response.messages);
-              const annotations = { latency: timeTaken, model: model.label };
+              const responseMessagesWithoutIncompleteToolCalls =
+                sanitizeResponseMessages(response.messages);
 
+              const timeTaken = Date.now() - start;
+              const annotations = { latency: timeTaken, model: model.id };
+
+              console.time("saveMessages");
               await saveMessages({
-                messages: responseMessagesWithoutIncompleteToolCalls.map((message) => {
-                  return {
-                    id: message.id,
-                    chatId: id,
-                    role: message.role as string,
-                    content: message.content as JsonValue,
-                    annotations: [annotations],
-                    createdAt: new Date(),
-                  };
-                }),
+                messages: responseMessagesWithoutIncompleteToolCalls.map(
+                  (message) => {
+                    return {
+                      id: message.id,
+                      chatId: id,
+                      role: message.role as string,
+                      content: message.content as JsonValue,
+                      annotations: [annotations],
+                      experimental_attachments: [],
+                      createdAt: new Date(),
+                    };
+                  }
+                ),
               });
+              console.timeEnd("saveMessages");
 
               dataStream.writeMessageAnnotation(annotations);
             } catch (error) {
@@ -106,7 +148,7 @@ export async function POST(req: Request) {
         },
       });
 
-      result.mergeIntoDataStream(dataStream);
+      result.mergeIntoDataStream(dataStream, { sendReasoning: true });
     },
   });
 }

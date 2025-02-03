@@ -16,18 +16,22 @@ import {
   type SetStateAction,
   useCallback,
   useEffect,
+  useMemo,
+  useOptimistic,
   useRef,
   useState,
 } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 
+import { models } from "@/lib/ai/models";
 import { cn, sanitizeUIMessages } from "@/lib/utils";
 
 import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 function PureMultimodalInput({
   chatId,
@@ -42,6 +46,7 @@ function PureMultimodalInput({
   append,
   handleSubmit,
   className,
+  selectedModelId,
 }: {
   chatId: string;
   input: string;
@@ -63,9 +68,17 @@ function PureMultimodalInput({
     chatRequestOptions?: ChatRequestOptions
   ) => void;
   className?: string;
+  selectedModelId: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+
+  const [optimisticModelId] = useOptimistic(selectedModelId);
+
+  const selectedModel = useMemo(
+    () => models.find((model) => model.id === optimisticModelId),
+    [optimisticModelId]
+  );
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -207,6 +220,7 @@ function PureMultimodalInput({
 
       <input
         type="file"
+        accept="image/png, image/jpeg"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
         ref={fileInputRef}
         multiple
@@ -215,9 +229,17 @@ function PureMultimodalInput({
       />
 
       {(attachments.length > 0 || uploadQueue.length > 0) && (
-        <div className="flex flex-row gap-2 overflow-x-scroll items-end">
+        <div className="flex flex-row gap-2 overflow-x-auto items-end">
           {attachments.map((attachment) => (
-            <PreviewAttachment key={attachment.url} attachment={attachment} />
+            <PreviewAttachment
+              onClick={(att) => {
+                setAttachments((prev) => {
+                  return prev.filter((item) => item.url !== att.url);
+                });
+              }}
+              key={attachment.url}
+              attachment={attachment}
+            />
           ))}
 
           {uploadQueue.map((filename) => (
@@ -240,7 +262,7 @@ function PureMultimodalInput({
         value={input}
         onChange={handleInput}
         className={cn(
-          "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700",
+          "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-11",
           className
         )}
         rows={2}
@@ -259,7 +281,11 @@ function PureMultimodalInput({
       />
 
       <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
-        <AttachmentsButton fileInputRef={fileInputRef} isLoading={isLoading} />
+        <AttachmentsButton
+          disabled={!selectedModel?.capabilities.includes("image-input")}
+          fileInputRef={fileInputRef}
+          isLoading={isLoading}
+        />
       </div>
 
       <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
@@ -281,6 +307,7 @@ export const MultimodalInput = memo(
   PureMultimodalInput,
   (prevProps, nextProps) => {
     if (prevProps.input !== nextProps.input) return false;
+    if (prevProps.selectedModelId !== nextProps.selectedModelId) return false;
     if (prevProps.isLoading !== nextProps.isLoading) return false;
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
 
@@ -291,22 +318,44 @@ export const MultimodalInput = memo(
 function PureAttachmentsButton({
   fileInputRef,
   isLoading,
+  disabled,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   isLoading: boolean;
+  disabled?: boolean;
 }) {
   return (
-    <Button
-      className="rounded-md rounded-bl-lg p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200"
-      onClick={(event) => {
-        event.preventDefault();
-        fileInputRef.current?.click();
-      }}
-      disabled={isLoading}
-      variant="ghost"
-    >
-      <PaperclipIcon size={14} />
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {disabled ? (
+          <Button
+            onClick={() => {}}
+            variant="ghost"
+            size="icon"
+            type="button"
+            className="border cursor-default"
+          >
+            <PaperclipIcon className="size-4" />
+          </Button>
+        ) : (
+          <Button
+            className="rounded-md rounded-bl-lg p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200"
+            onClick={(event) => {
+              event.preventDefault();
+              fileInputRef.current?.click();
+            }}
+            disabled={isLoading || disabled}
+            variant="ghost"
+          >
+            <PaperclipIcon className="size-4" />
+          </Button>
+        )}
+      </TooltipTrigger>
+
+      <TooltipContent side="left">
+        {disabled ? "Desabilitado pelo modo de raciocínio" : "Anexar imagem"}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -353,7 +402,7 @@ function PureSendButton({
       }}
       disabled={input.length === 0 || uploadQueue.length > 0}
     >
-      <ArrowUpIcon size={14} />
+      <ArrowUpIcon className="size-4" />
     </Button>
   );
 }

@@ -28,7 +28,6 @@ import {
 import { models } from "@/lib/ai/models";
 import { cn, fetcher } from "@/lib/utils";
 
-import { Button } from "./ui/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -53,12 +52,7 @@ const PureChatItem = ({
   onDelete: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
-  // const { visibilityType, setVisibilityType } = useChatVisibility({
-  //   chatId: chat.id,
-  //   initialVisibility: chat.visibility,
-  // });
-
-  const chatModel = models.find((model) => model.apiIdentifier === chat.model);
+  const chatModel = models.find((model) => model.id === chat.model);
 
   return (
     <SidebarMenuItem>
@@ -104,12 +98,18 @@ function groupThreadsByDate(threads: Chat[]) {
   const todayStart = startOfToday();
   const yesterdayStart = startOfYesterday();
 
-  const todayItems = threads.filter((item) => isAfter(item.updatedAt, todayStart));
+  const todayItems = threads.filter((item) =>
+    isAfter(item.updatedAt, todayStart)
+  );
   const yesterdayItems = threads.filter(
-    (item) => isAfter(item.updatedAt, yesterdayStart) && isBefore(item.updatedAt, todayStart)
+    (item) =>
+      isAfter(item.updatedAt, yesterdayStart) &&
+      isBefore(item.updatedAt, todayStart)
   );
 
-  const thirtyDaysItems = threads.filter((item) => isBefore(item.updatedAt, yesterdayStart));
+  const thirtyDaysItems = threads.filter((item) =>
+    isBefore(item.updatedAt, yesterdayStart)
+  );
 
   const data = [
     { label: "Hoje", items: todayItems },
@@ -129,7 +129,7 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
     data: history,
     isLoading,
     mutate,
-  } = useSWR<Chat[]>(user ? "/api/chat/history" : null, fetcher, {
+  } = useSWR<Chat[]>(user ? "/api/history" : null, fetcher, {
     fallbackData: [],
   });
 
@@ -151,15 +151,16 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
       success: () => {
         mutate((history) => {
           if (history) {
-            return history.filter((h) => h.id !== chatId);
+            return history.filter((h) => h.id !== deleteId);
           }
         });
+
+        setShowDeleteDialog(false);
+
         return "Chat deletado com sucesso!";
       },
       error: "Erro ao deletar o chat.",
     });
-
-    setShowDeleteDialog(false);
 
     if (deleteId === chatId) {
       router.push("/");
@@ -171,7 +172,9 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
-          <div className="text-muted-foreground">Faça login para salvar seus chats!</div>
+          <div className="text-muted-foreground">
+            Faça login para salvar seus chats!
+          </div>
         </SidebarGroupContent>
       </SidebarGroup>
     );
@@ -184,7 +187,10 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
         <SidebarGroupContent>
           <div className="flex flex-col">
             {[44, 32, 28, 64, 52].map((item) => (
-              <div key={item} className="rounded-md h-8 flex gap-2 px-2 items-center">
+              <div
+                key={item}
+                className="rounded-md h-8 flex gap-2 px-2 items-center"
+              >
                 <div
                   className="h-4 rounded-md flex-1 max-w-[--skeleton-width] bg-sidebar-accent-foreground/10"
                   style={
@@ -217,7 +223,10 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
     <>
       {history &&
         groupThreadsByDate(history).map((item) => (
-          <SidebarGroup key={item.label} className={cn(item.items.length === 0 && "hidden")}>
+          <SidebarGroup
+            key={item.label}
+            className={cn(item.items.length === 0 && "hidden")}
+          >
             <SidebarGroupLabel>{item.label}</SidebarGroupLabel>
 
             <SidebarGroupContent>
@@ -241,19 +250,56 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
           </SidebarGroup>
         ))}
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      {/* <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir chat</AlertDialogTitle>
-            <AlertDialogDescription>Tem certeza que deseja excluir este chat?</AlertDialogDescription>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este chat?
+            </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
 
-            <AlertDialogAction asChild>
-              <Button variant="destructive" onClick={handleDelete}>
-                Excluir
-              </Button>
+            <AlertDialogAction asChild onClick={handleDelete}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog> */}
+
+      {/* <DeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open);
+        }}
+      /> */}
+
+      <AlertDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open);
+          setTimeout(() => (document.body.style.pointerEvents = ""), 300);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir chat</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este chat?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() =>
+                setTimeout(() => (document.body.style.pointerEvents = ""), 300)
+              }
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>
+              Deletar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

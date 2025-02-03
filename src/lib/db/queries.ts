@@ -61,13 +61,19 @@ export async function getMessagesByChatId({ id }: { id: string }) {
   }
 }
 
-export async function saveMessages({ messages }: { messages: Array<Omit<Message, "updatedAt" | "createdAt">> }) {
+export async function saveMessages({
+  messages,
+}: {
+  messages: Array<Omit<Message, "updatedAt" | "createdAt">>;
+}) {
   try {
     return await prisma.message.createMany({
       data: messages.map((msg) => ({
         chatId: msg.chatId,
         content: msg.content as InputJsonValue,
         annotations: msg.annotations as InputJsonValue[],
+        experimental_attachments:
+          msg.experimental_attachments as InputJsonValue[],
         id: msg.id,
         role: msg.role,
       })),
@@ -130,7 +136,13 @@ export async function getMessageById({ id }: { id: string }) {
   }
 }
 
-export async function deleteMessagesByChatIdAfterTimestamp({ chatId, timestamp }: { chatId: string; timestamp: Date }) {
+export async function deleteMessagesByChatIdAfterTimestamp({
+  chatId,
+  timestamp,
+}: {
+  chatId: string;
+  timestamp: Date;
+}) {
   try {
     const messagesToDelete = await prisma.message.findMany({
       where: {
@@ -157,7 +169,10 @@ export async function deleteMessagesByChatIdAfterTimestamp({ chatId, timestamp }
       });
     }
   } catch (error) {
-    console.error("Failed to delete messages by id after timestamp from database", error);
+    console.error(
+      "Failed to delete messages by id after timestamp from database",
+      error
+    );
 
     if (error instanceof Error) {
       console.log("Error: ", error.stack);

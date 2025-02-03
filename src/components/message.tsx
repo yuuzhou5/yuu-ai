@@ -27,8 +27,12 @@ const PurePreviewMessage = ({
   chatId: string;
   message: Message;
   isLoading: boolean;
-  setMessages: (messages: Message[] | ((messages: Message[]) => Message[])) => void;
-  reload: (chatRequestOptions?: ChatRequestOptions) => Promise<string | null | undefined>;
+  setMessages: (
+    messages: Message[] | ((messages: Message[]) => Message[])
+  ) => void;
+  reload: (
+    chatRequestOptions?: ChatRequestOptions
+  ) => Promise<string | null | undefined>;
   isReadonly: boolean;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
@@ -43,7 +47,7 @@ const PurePreviewMessage = ({
       >
         <div
           className={cn(
-            "flex gap-4 w-full group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl",
+            "flex gap-2 md:gap-4 w-full group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl",
             {
               "w-full": mode === "edit",
               "group-data-[role=user]/message:w-fit": mode !== "edit",
@@ -51,7 +55,7 @@ const PurePreviewMessage = ({
           )}
         >
           {message.role === "assistant" && (
-            <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
+            <div className="hidden md:flex size-8 items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
               <div className="translate-y-px">
                 <SparklesIcon size={14} />
               </div>
@@ -62,13 +66,16 @@ const PurePreviewMessage = ({
             {message.experimental_attachments && (
               <div className="flex flex-row justify-end gap-2">
                 {message.experimental_attachments.map((attachment) => (
-                  <PreviewAttachment key={attachment.url} attachment={attachment} />
+                  <PreviewAttachment
+                    key={attachment.url}
+                    attachment={attachment}
+                  />
                 ))}
               </div>
             )}
 
             {message.content && mode === "view" && (
-              <div className="flex flex-row gap-2 items-start">
+              <div className="flex flex-row gap-2 items-center">
                 {message.role === "user" && !isReadonly && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -79,17 +86,18 @@ const PurePreviewMessage = ({
                           setMode("edit");
                         }}
                       >
-                        <PencilLine />
+                        <PencilLine className="size-4" />
                       </Button>
                     </TooltipTrigger>
 
-                    <TooltipContent>Edit message</TooltipContent>
+                    <TooltipContent side="left">Editar mensagem</TooltipContent>
                   </Tooltip>
                 )}
 
                 <div
                   className={cn("flex flex-col gap-4", {
-                    "bg-primary text-primary-foreground px-3 py-2 rounded-xl": message.role === "user",
+                    "bg-secondary px-3 py-2 rounded-xl":
+                      message.role === "user",
                   })}
                 >
                   <Markdown>{message.content as string}</Markdown>
@@ -121,7 +129,11 @@ const PurePreviewMessage = ({
 
                     return (
                       <div key={toolCallId}>
-                        {toolName === "getWeather" ? <Weather weatherAtLocation={result} /> : <div>other tool</div>}
+                        {toolName === "getWeather" ? (
+                          <Weather weatherAtLocation={result} />
+                        ) : (
+                          <div>other tool</div>
+                        )}
                       </div>
                     );
                   }
@@ -133,7 +145,11 @@ const PurePreviewMessage = ({
                         skeleton: ["getWeather"].includes(toolName),
                       })}
                     >
-                      {toolName === "getWeather" ? <Weather /> : <div>other tool</div>}
+                      {toolName === "getWeather" ? (
+                        <Weather />
+                      ) : (
+                        <div>other tool</div>
+                      )}
                     </div>
                   );
                 })}
@@ -141,7 +157,12 @@ const PurePreviewMessage = ({
             )}
 
             {!isReadonly && (
-              <MessageActions key={`action-${message.id}`} chatId={chatId} message={message} isLoading={isLoading} />
+              <MessageActions
+                key={`action-${message.id}`}
+                chatId={chatId}
+                message={message}
+                isLoading={isLoading}
+              />
             )}
           </div>
         </div>
@@ -150,13 +171,22 @@ const PurePreviewMessage = ({
   );
 };
 
-export const PreviewMessage = memo(PurePreviewMessage, (prevProps, nextProps) => {
-  if (prevProps.isLoading !== nextProps.isLoading) return false;
-  if (prevProps.message.content !== nextProps.message.content) return false;
-  if (!equal(prevProps.message.toolInvocations, nextProps.message.toolInvocations)) return false;
+export const PreviewMessage = memo(
+  PurePreviewMessage,
+  (prevProps, nextProps) => {
+    if (prevProps.isLoading !== nextProps.isLoading) return false;
+    if (prevProps.message.content !== nextProps.message.content) return false;
+    if (
+      !equal(
+        prevProps.message.toolInvocations,
+        nextProps.message.toolInvocations
+      )
+    )
+      return false;
 
-  return true;
-});
+    return true;
+  }
+);
 
 export const ThinkingMessage = () => {
   const role = "assistant";
@@ -181,7 +211,9 @@ export const ThinkingMessage = () => {
         </div>
 
         <div className="flex flex-col gap-2 w-full">
-          <div className="flex flex-col gap-4 text-muted-foreground">Pensando...</div>
+          <div className="flex flex-col gap-4 text-muted-foreground">
+            Pensando...
+          </div>
         </div>
       </div>
     </motion.div>
