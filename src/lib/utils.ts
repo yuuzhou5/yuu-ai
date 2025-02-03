@@ -1,9 +1,4 @@
-import {
-  CoreAssistantMessage,
-  CoreToolMessage,
-  Message,
-  ToolInvocation,
-} from "ai";
+import { CoreAssistantMessage, CoreToolMessage, JSONValue, Message, ToolInvocation } from "ai";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -30,9 +25,7 @@ export const fetcher = async (url: string) => {
   const res = await fetch(url);
 
   if (!res.ok) {
-    const error = new Error(
-      "An error occurred while fetching the data."
-    ) as ApplicationError;
+    const error = new Error("An error occurred while fetching the data.") as ApplicationError;
 
     error.info = await res.json();
     error.status = res.status;
@@ -58,9 +51,7 @@ export function sanitizeUIMessages(messages: Array<Message>): Array<Message> {
     }
 
     const sanitizedToolInvocations = message.toolInvocations.filter(
-      (toolInvocation) =>
-        toolInvocation.state === "result" ||
-        toolResultIds.includes(toolInvocation.toolCallId)
+      (toolInvocation) => toolInvocation.state === "result" || toolResultIds.includes(toolInvocation.toolCallId)
     );
 
     return {
@@ -70,9 +61,7 @@ export function sanitizeUIMessages(messages: Array<Message>): Array<Message> {
   });
 
   return messagesBySanitizedToolInvocations.filter(
-    (message) =>
-      message.content.length > 0 ||
-      (message.toolInvocations && message.toolInvocations.length > 0)
+    (message) => message.content.length > 0 || (message.toolInvocations && message.toolInvocations.length > 0)
   );
 }
 
@@ -84,9 +73,7 @@ export function getMostRecentUserMessage(messages: Array<Message>) {
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
 
-export function sanitizeResponseMessages(
-  messages: Array<ResponseMessage>
-): Array<ResponseMessage> {
+export function sanitizeResponseMessages(messages: Array<ResponseMessage>): Array<ResponseMessage> {
   const toolResultIds: Array<string> = [];
 
   for (const message of messages) {
@@ -118,9 +105,7 @@ export function sanitizeResponseMessages(
     };
   });
 
-  return messagesBySanitizedContent.filter(
-    (message) => message.content.length > 0
-  );
+  return messagesBySanitizedContent.filter((message) => message.content.length > 0);
 }
 
 function addToolMessageToChat({
@@ -135,9 +120,7 @@ function addToolMessageToChat({
       return {
         ...message,
         toolInvocations: message.toolInvocations.map((toolInvocation) => {
-          const toolResult = toolMessage.content.find(
-            (tool) => tool.toolCallId === toolInvocation.toolCallId
-          );
+          const toolResult = toolMessage.content.find((tool) => tool.toolCallId === toolInvocation.toolCallId);
 
           if (toolResult) {
             return {
@@ -199,6 +182,7 @@ export function convertToUIMessages(messages: Array<PrismaMessage>) {
       role: message.role as Message["role"],
       content: textContent,
       toolInvocations,
+      annotations: message.annotations as JSONValue[],
     });
 
     return chatMessages;

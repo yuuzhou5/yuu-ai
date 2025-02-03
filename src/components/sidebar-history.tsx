@@ -1,14 +1,24 @@
 "use client";
 
 import { isAfter, isBefore, startOfToday, startOfYesterday } from "date-fns";
-import { MoreHorizontalIcon, Trash, TrashIcon } from "lucide-react";
+import { MoreHorizontalIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { User } from "next-auth";
-import { memo, useEffect } from "react";
+import { memo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +28,7 @@ import {
 import { models } from "@/lib/ai/models";
 import { cn, fetcher } from "@/lib/utils";
 
+import { Button } from "./ui/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -29,7 +40,6 @@ import {
   useSidebar,
 } from "./ui/sidebar";
 
-import { useConfirm } from "@omit/react-confirm-dialog";
 import { Chat } from "@prisma/client";
 
 const PureChatItem = ({
@@ -49,8 +59,6 @@ const PureChatItem = ({
   // });
 
   const chatModel = models.find((model) => model.apiIdentifier === chat.model);
-
-  console.log(chat, chatModel);
 
   return (
     <SidebarMenuItem>
@@ -79,7 +87,7 @@ const PureChatItem = ({
             onSelect={() => onDelete(chat.id)}
           >
             <TrashIcon />
-            <span>Delete</span>
+            <span>Deletar</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -96,18 +104,12 @@ function groupThreadsByDate(threads: Chat[]) {
   const todayStart = startOfToday();
   const yesterdayStart = startOfYesterday();
 
-  const todayItems = threads.filter((item) =>
-    isAfter(item.updatedAt, todayStart)
-  );
+  const todayItems = threads.filter((item) => isAfter(item.updatedAt, todayStart));
   const yesterdayItems = threads.filter(
-    (item) =>
-      isAfter(item.updatedAt, yesterdayStart) &&
-      isBefore(item.updatedAt, todayStart)
+    (item) => isAfter(item.updatedAt, yesterdayStart) && isBefore(item.updatedAt, todayStart)
   );
 
-  const thirtyDaysItems = threads.filter((item) =>
-    isBefore(item.updatedAt, yesterdayStart)
-  );
+  const thirtyDaysItems = threads.filter((item) => isBefore(item.updatedAt, yesterdayStart));
 
   const data = [
     { label: "Hoje", items: todayItems },
@@ -135,48 +137,33 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
     mutate();
   }, [pathname, mutate]);
 
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   const router = useRouter();
-  const confirm = useConfirm();
-  async function openDeleteDialog(deleteId: string) {
-    const result = await confirm({
-      title: "Excluir chat",
-      description: "Tem certeza que deseja excluir este chat?",
-      icon: <Trash className="size-4 text-destructive" />,
-      confirmText: "Excluir",
-      cancelText: "Cancelar",
-      cancelButton: {
-        size: "default",
-        variant: "outline",
-      },
-      confirmButton: {
-        className: "bg-red-500 hover:bg-red-600 text-white",
-      },
-      alertDialogTitle: {
-        className: "flex items-center gap-2",
-      },
+  async function handleDelete() {
+    const deletePromise = fetch(`/api/chat?id=${deleteId}`, {
+      method: "DELETE",
     });
 
-    if (result) {
-      const deletePromise = fetch(`/api/chat?id=${deleteId}`, {
-        method: "DELETE",
-      });
+    toast.promise(deletePromise, {
+      loading: "Deletando chat...",
+      success: () => {
+        mutate((history) => {
+          if (history) {
+            return history.filter((h) => h.id !== chatId);
+          }
+        });
+        return "Chat deletado com sucesso!";
+      },
+      error: "Erro ao deletar o chat.",
+    });
 
-      toast.promise(deletePromise, {
-        loading: "Deleting chat...",
-        success: () => {
-          mutate((history) => {
-            if (history) {
-              return history.filter((h) => h.id !== deleteId);
-            }
-          });
-          return "Chat deletado com sucesso!";
-        },
-        error: "Erro ao deletar o chat.",
-      });
+    setShowDeleteDialog(false);
 
-      if (deleteId === chatId) {
-        router.push("/");
-      }
+    if (deleteId === chatId) {
+      router.push("/");
+      router.refresh();
     }
   }
 
@@ -184,9 +171,7 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
-          <div className="text-muted-foreground">
-            Faça login para salvar seus chats!
-          </div>
+          <div className="text-muted-foreground">Faça login para salvar seus chats!</div>
         </SidebarGroupContent>
       </SidebarGroup>
     );
@@ -199,10 +184,7 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
         <SidebarGroupContent>
           <div className="flex flex-col">
             {[44, 32, 28, 64, 52].map((item) => (
-              <div
-                key={item}
-                className="rounded-md h-8 flex gap-2 px-2 items-center"
-              >
+              <div key={item} className="rounded-md h-8 flex gap-2 px-2 items-center">
                 <div
                   className="h-4 rounded-md flex-1 max-w-[--skeleton-width] bg-sidebar-accent-foreground/10"
                   style={
@@ -235,10 +217,7 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
     <>
       {history &&
         groupThreadsByDate(history).map((item) => (
-          <SidebarGroup
-            key={item.label}
-            className={cn(item.items.length === 0 && "hidden")}
-          >
+          <SidebarGroup key={item.label} className={cn(item.items.length === 0 && "hidden")}>
             <SidebarGroupLabel>{item.label}</SidebarGroupLabel>
 
             <SidebarGroupContent>
@@ -250,44 +229,35 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
                       chat={chat}
                       isActive={chat.id === chatId}
                       onDelete={(chatId) => {
-                        // console.log("Deleting", chatId);
-                        // setDeleteId(chatId);
-                        // setShowDeleteDialog(true);
-                        openDeleteDialog(chatId);
+                        setDeleteId(chatId);
+                        setShowDeleteDialog(true);
                       }}
                       setOpenMobile={setOpenMobile}
                     />
                   );
-
-                  // return (
-                  //   <SidebarMenuItem
-                  //     key={thread.id}
-                  //     className="flex items-center justify-between"
-                  //   >
-                  //     <SidebarMenuButton
-                  //       asChild
-                  //       // isActive={params.thread_id === thread.id}
-                  //     >
-                  //       <Link href={`/c/${thread.id}`}>
-                  //         {threadModel && <threadModel.icon />}
-
-                  //         <span>{thread.title}</span>
-                  //       </Link>
-                  //     </SidebarMenuButton>
-
-                  //     <SidebarMenuAction
-                  //       // onClick={() => handleDeleteThread(thread)}
-                  //       className="opacity-0 group-hover/menu-item:opacity-100 duration-200"
-                  //     >
-                  //       <TrashIcon className="size-3 hover:opacity-60 duration-200" />
-                  //     </SidebarMenuAction>
-                  //   </SidebarMenuItem>
-                  // );
                 })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir chat</AlertDialogTitle>
+            <AlertDialogDescription>Tem certeza que deseja excluir este chat?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+
+            <AlertDialogAction asChild>
+              <Button variant="destructive" onClick={handleDelete}>
+                Excluir
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

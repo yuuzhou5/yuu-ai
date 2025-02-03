@@ -1,29 +1,13 @@
-import {
-  createDataStreamResponse,
-  type Message,
-  smoothStream,
-  streamText,
-} from "ai";
+import { createDataStreamResponse, type Message, smoothStream, streamText } from "ai";
 
+import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import { auth } from "@/auth";
 import { modelRegistry } from "@/lib/ai";
 import { models } from "@/lib/ai/models";
 import { systemPrompt } from "@/lib/ai/prompts";
 import { getWeather } from "@/lib/ai/tools/get-weather";
-import {
-  deleteChatById,
-  getChatById,
-  saveChat,
-  saveMessages,
-} from "@/lib/db/queries";
-import { prisma } from "@/lib/prisma";
-import {
-  generateUUID,
-  getMostRecentUserMessage,
-  sanitizeResponseMessages,
-} from "@/lib/utils";
-
-import { generateTitleFromUserMessage } from "../../actions";
+import { deleteChatById, getChatById, saveChat, saveMessages } from "@/lib/db/queries";
+import { generateUUID, getMostRecentUserMessage, sanitizeResponseMessages } from "@/lib/utils";
 
 import { JsonValue } from "@prisma/client/runtime/library";
 
@@ -35,12 +19,9 @@ const weatherTools: AllowedTools[] = ["getWeather"];
 const allTools: AllowedTools[] = [...weatherTools];
 
 export async function POST(req: Request) {
-  const {
-    id,
-    messages,
-    modelId,
-  }: { id: string; messages: Array<Message>; modelId: string } =
-    await req.json();
+  const start = Date.now();
+
+  const { id, messages, modelId }: { id: string; messages: Array<Message>; modelId: string } = await req.json();
 
   const session = await auth();
 
@@ -60,28 +41,21 @@ export async function POST(req: Request) {
     return new Response("No user message found", { status: 400 });
   }
 
-  console.log(await prisma.chat.findMany());
-
-  // const chat = await getChatById({ id });
-  const chat = await prisma.chat.findUnique({
-    where: { id },
-  });
+  const chat = await getChatById({ id });
 
   if (!chat) {
     const title = await generateTitleFromUserMessage({ message: userMessage });
 
-    console.log(`Generated title: ${title}`);
-
     await saveChat({
       id,
       userId: session.user.id,
-      title: userMessage.content,
+      title,
       model: model.id,
     });
   }
 
   await saveMessages({
-    messages: [{ ...userMessage, chatId: id }],
+    messages: [{ ...userMessage, chatId: id, annotations: [] }],
   });
 
   return createDataStreamResponse({
@@ -104,22 +78,24 @@ export async function POST(req: Request) {
         onFinish: async ({ response }) => {
           if (session.user?.id) {
             try {
-              const responseMessagesWithoutIncompleteToolCalls =
-                sanitizeResponseMessages(response.messages);
+              const timeTaken = Date.now() - start;
+              const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(response.messages);
+              const annotations = { latency: timeTaken, model: model.label };
 
               await saveMessages({
-                messages: responseMessagesWithoutIncompleteToolCalls.map(
-                  (message) => {
-                    return {
-                      id: message.id,
-                      chatId: id,
-                      role: message.role as string,
-                      content: message.content as JsonValue,
-                      createdAt: new Date(),
-                    };
-                  }
-                ),
+                messages: responseMessagesWithoutIncompleteToolCalls.map((message) => {
+                  return {
+                    id: message.id,
+                    chatId: id,
+                    role: message.role as string,
+                    content: message.content as JsonValue,
+                    annotations: [annotations],
+                    createdAt: new Date(),
+                  };
+                }),
               });
+
+              dataStream.writeMessageAnnotation(annotations);
             } catch (error) {
               console.log("[ERROR] /api/chat - Error:");
               console.log(error);
@@ -134,120 +110,6 @@ export async function POST(req: Request) {
     },
   });
 }
-
-// export async function POST(req: Request) {
-//   const session = await auth();
-
-//   if (!session) {
-//     return new Response("Unauthorized", { status: 401 });
-//   }
-
-//   const { success, data: parsedData } = z
-//     .object({ id: z.string() })
-//     .safeParse(session.user);
-
-//   if (!success) {
-//     return new Response("Unauthorized", { status: 401 });
-//   }
-
-//   const user = await prisma.user.findUnique({
-//     where: {
-//       id: parsedData.id,
-//     },
-//   });
-
-//   if (!user) {
-//     return new Response("Unauthorized", { status: 401 });
-//   }
-
-//   const { messages, ...body } = await req.json();
-
-//   console.log(messages);
-
-//   const { threadId, model } = z
-//     .object({ threadId: z.string().optional(), model: z.string() })
-//     .parse(body);
-
-//   return createDataStreamResponse({
-//     execute: (dataStream) => {
-//       const result = streamText({
-//         model: registry.languageModel(model),
-//         messages: convertToCoreMessages(messages),
-//         experimental_transform: smoothStream({
-//           delayInMs: 15,
-//           chunking: "word",
-//         }),
-
-//         async onFinish({ text }) {
-//           if (!threadId) {
-//             const { id } = await prisma.chat.create({
-//               data: {
-//                 messages: [
-//                   messages[messages.length - 1],
-//                   { role: "assistant", content: text },
-//                 ],
-//                 title: messages[messages.length - 1].content,
-//                 ownerId: user.id,
-//                 model,
-//                 totalTokens: 0,
-//                 totalCosts: 0,
-//               },
-//             });
-
-//             revalidateTag("threads");
-
-//             dataStream.writeData({ threadId: id });
-
-//             return;
-//           }
-
-//           dataStream.writeData({ threadId });
-
-//           const chat = await prisma.chat.findUnique({
-//             where: {
-//               id: threadId,
-//             },
-//           });
-
-//           if (!chat) {
-//             console.log("Chat not found");
-
-//             return;
-//           }
-
-//           const { success, data: storedMessages } =
-//             chatMessagesSchema.safeParse(chat.messages);
-
-//           if (!success) {
-//             console.log("Invalid messages");
-
-//             return;
-//           }
-
-//           const currentMessages = messages[messages.length - 1];
-
-//           const combinedMessages = [...storedMessages, currentMessages];
-
-//           await prisma.chat.update({
-//             where: {
-//               id: threadId,
-//             },
-//             data: {
-//               messages: [
-//                 ...combinedMessages,
-//                 { role: "assistant", content: text },
-//               ],
-//             },
-//           });
-
-//           revalidateTag("threads");
-//         },
-//       });
-
-//       result.mergeIntoDataStream(dataStream);
-//     },
-//   });
-// }
 
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);

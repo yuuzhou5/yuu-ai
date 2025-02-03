@@ -34,7 +34,7 @@ export const models: Array<Model> = [
     apiIdentifier: "deepseek:deepseek-reasoner",
     description: "Optimized for reasoning and logic",
     icon: Icons.DeepSeek,
-    disabled: false,
+    disabled: true,
   },
   {
     id: "gemini-2.0-flash-exp",

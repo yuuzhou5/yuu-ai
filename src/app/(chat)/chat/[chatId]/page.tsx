@@ -17,7 +17,7 @@ type ChatPageProps = {
 export async function generateMetadata({ params }: ChatPageProps) {
   const { chatId } = await params;
 
-  const chat = await prisma.chat.findUnique({
+  const chat = await prisma.chat.findFirst({
     where: {
       id: chatId,
     },
@@ -45,9 +45,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
 
   const cookieStore = await cookies();
   const modelIdFromCookie = cookieStore.get("model-id")?.value;
-  const selectedModelId =
-    models.find((model) => model.id === modelIdFromCookie)?.id ||
-    DEFAULT_MODEL_NAME;
+  const selectedModelId = models.find((model) => model.id === modelIdFromCookie)?.id || DEFAULT_MODEL_NAME;
 
   return (
     <Chat

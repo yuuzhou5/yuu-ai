@@ -1,10 +1,7 @@
 import { ChatRequestOptions, Message } from "ai";
 import equal from "fast-deep-equal";
-import { memo } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
-
-// import { Vote } from "@/lib/db/schema";
 import { PreviewMessage, ThinkingMessage } from "./message";
 import { Overview } from "./overview";
 
@@ -12,31 +9,44 @@ interface MessagesListProps {
   chatId: string;
   isLoading: boolean;
   messages: Array<Message>;
-  setMessages: (
-    messages: Message[] | ((messages: Message[]) => Message[])
-  ) => void;
-  reload: (
-    chatRequestOptions?: ChatRequestOptions
-  ) => Promise<string | null | undefined>;
+  setMessages: (messages: Message[] | ((messages: Message[]) => Message[])) => void;
+  reload: (chatRequestOptions?: ChatRequestOptions) => Promise<string | null | undefined>;
   isReadonly: boolean;
-  // isBlockVisible: boolean;
-  // votes: Array<Vote> | undefined;
 }
 
-function PureMessagesList({
-  chatId,
-  isLoading,
-  messages,
-  setMessages,
-  reload,
-  isReadonly,
-}: MessagesListProps) {
-  const [messagesContainerRef, messagesEndRef] =
-    useScrollToBottom<HTMLDivElement>();
+function PureMessagesList({ chatId, isLoading, messages, setMessages, reload, isReadonly }: MessagesListProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const autoScrollEnabledRef = useRef(true);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+
+  const checkScrollPosition = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const offset = 20;
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - offset;
+
+    autoScrollEnabledRef.current = isNearBottom;
+    setIsAtBottom(isNearBottom);
+  };
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    const end = messagesEndRef.current;
+
+    if (messages.length === 0) return;
+
+    if (container && end && autoScrollEnabledRef.current) {
+      end.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [messages, isAtBottom]);
 
   return (
     <div
-      ref={messagesContainerRef}
+      onScroll={checkScrollPosition}
+      ref={scrollContainerRef}
       className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4"
     >
       {messages.length === 0 && <Overview />}
@@ -50,22 +60,12 @@ function PureMessagesList({
           setMessages={setMessages}
           reload={reload}
           isReadonly={isReadonly}
-          // vote={
-          //   votes
-          //     ? votes.find((vote) => vote.messageId === message.id)
-          //     : undefined
-          // }
         />
       ))}
 
-      {isLoading &&
-        messages.length > 0 &&
-        messages[messages.length - 1].role === "user" && <ThinkingMessage />}
+      {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && <ThinkingMessage />}
 
-      <div
-        ref={messagesEndRef}
-        className="shrink-0 min-w-[24px] min-h-[24px]"
-      />
+      <div ref={messagesEndRef} className="shrink-0 min-w-[24px] min-h-[24px]" />
     </div>
   );
 }

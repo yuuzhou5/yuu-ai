@@ -4,13 +4,7 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { User } from "next-auth";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenuButton } from "@/components/ui/sidebar";
 
 import SidebarHistory from "./sidebar-history";
 import { Button } from "./ui/button";
@@ -18,35 +12,6 @@ import { Button } from "./ui/button";
 import { GearIcon } from "@radix-ui/react-icons";
 
 export function AppSidebar({ user }: { user: User | undefined }) {
-  // async function handleDeleteThread(thread: Thread) {
-  //   const result = await confirm({
-  //     title: "Excluir chat",
-  //     description: "Tem certeza que deseja excluir este chat?",
-  //     icon: <Trash className="size-4 text-destructive" />,
-  //     confirmText: "Excluir",
-  //     cancelText: "Cancelar",
-  //     cancelButton: {
-  //       size: "default",
-  //       variant: "outline",
-  //     },
-  //     confirmButton: {
-  //       className: "bg-red-500 hover:bg-red-600 text-white",
-  //     },
-  //     alertDialogTitle: {
-  //       className: "flex items-center gap-2",
-  //     },
-  //   });
-
-  //   if (result) {
-  //     await deleteThreadFn(thread);
-
-  //     if (params.thread_id === thread.id) {
-  //       router.push("/");
-  //       router.refresh();
-  //     }
-  //   }
-  // }
-
   return (
     <Sidebar>
       <SidebarHeader>

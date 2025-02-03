@@ -14,6 +14,7 @@ import { MessageEditor } from "./message-editor";
 import { PreviewAttachment } from "./preview-attachment";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Weather } from "./weather";
 
 const PurePreviewMessage = ({
   chatId,
@@ -26,12 +27,8 @@ const PurePreviewMessage = ({
   chatId: string;
   message: Message;
   isLoading: boolean;
-  setMessages: (
-    messages: Message[] | ((messages: Message[]) => Message[])
-  ) => void;
-  reload: (
-    chatRequestOptions?: ChatRequestOptions
-  ) => Promise<string | null | undefined>;
+  setMessages: (messages: Message[] | ((messages: Message[]) => Message[])) => void;
+  reload: (chatRequestOptions?: ChatRequestOptions) => Promise<string | null | undefined>;
   isReadonly: boolean;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
@@ -65,10 +62,7 @@ const PurePreviewMessage = ({
             {message.experimental_attachments && (
               <div className="flex flex-row justify-end gap-2">
                 {message.experimental_attachments.map((attachment) => (
-                  <PreviewAttachment
-                    key={attachment.url}
-                    attachment={attachment}
-                  />
+                  <PreviewAttachment key={attachment.url} attachment={attachment} />
                 ))}
               </div>
             )}
@@ -88,14 +82,14 @@ const PurePreviewMessage = ({
                         <PencilLine />
                       </Button>
                     </TooltipTrigger>
+
                     <TooltipContent>Edit message</TooltipContent>
                   </Tooltip>
                 )}
 
                 <div
                   className={cn("flex flex-col gap-4", {
-                    "bg-primary text-primary-foreground px-3 py-2 rounded-xl":
-                      message.role === "user",
+                    "bg-primary text-primary-foreground px-3 py-2 rounded-xl": message.role === "user",
                   })}
                 >
                   <Markdown>{message.content as string}</Markdown>
@@ -117,41 +111,21 @@ const PurePreviewMessage = ({
               </div>
             )}
 
-            {/* {message.toolInvocations && message.toolInvocations.length > 0 && (
+            {message.toolInvocations && message.toolInvocations.length > 0 && (
               <div className="flex flex-col gap-4">
                 {message.toolInvocations.map((toolInvocation) => {
-                  const { toolName, toolCallId, state, args } = toolInvocation;
+                  const { toolName, toolCallId, state } = toolInvocation;
 
                   if (state === "result") {
                     const { result } = toolInvocation;
 
                     return (
                       <div key={toolCallId}>
-                        {toolName === "getWeather" ? (
-                          <Weather weatherAtLocation={result} />
-                        ) : toolName === "createDocument" ? (
-                          <DocumentPreview
-                            isReadonly={isReadonly}
-                            result={result}
-                          />
-                        ) : toolName === "updateDocument" ? (
-                          <DocumentToolResult
-                            type="update"
-                            result={result}
-                            isReadonly={isReadonly}
-                          />
-                        ) : toolName === "requestSuggestions" ? (
-                          <DocumentToolResult
-                            type="request-suggestions"
-                            result={result}
-                            isReadonly={isReadonly}
-                          />
-                        ) : (
-                          <pre>{JSON.stringify(result, null, 2)}</pre>
-                        )}
+                        {toolName === "getWeather" ? <Weather weatherAtLocation={result} /> : <div>other tool</div>}
                       </div>
                     );
                   }
+
                   return (
                     <div
                       key={toolCallId}
@@ -159,36 +133,15 @@ const PurePreviewMessage = ({
                         skeleton: ["getWeather"].includes(toolName),
                       })}
                     >
-                      {toolName === "getWeather" ? (
-                        <Weather />
-                      ) : toolName === "createDocument" ? (
-                        <DocumentPreview isReadonly={isReadonly} args={args} />
-                      ) : toolName === "updateDocument" ? (
-                        <DocumentToolCall
-                          type="update"
-                          args={args}
-                          isReadonly={isReadonly}
-                        />
-                      ) : toolName === "requestSuggestions" ? (
-                        <DocumentToolCall
-                          type="request-suggestions"
-                          args={args}
-                          isReadonly={isReadonly}
-                        />
-                      ) : null}
+                      {toolName === "getWeather" ? <Weather /> : <div>other tool</div>}
                     </div>
                   );
                 })}
               </div>
-            )} */}
+            )}
 
             {!isReadonly && (
-              <MessageActions
-                key={`action-${message.id}`}
-                chatId={chatId}
-                message={message}
-                isLoading={isLoading}
-              />
+              <MessageActions key={`action-${message.id}`} chatId={chatId} message={message} isLoading={isLoading} />
             )}
           </div>
         </div>
@@ -197,24 +150,13 @@ const PurePreviewMessage = ({
   );
 };
 
-export const PreviewMessage = memo(
-  PurePreviewMessage,
-  (prevProps, nextProps) => {
-    if (prevProps.isLoading !== nextProps.isLoading) return false;
-    if (prevProps.message.content !== nextProps.message.content) return false;
-    if (
-      !equal(
-        prevProps.message.toolInvocations,
-        nextProps.message.toolInvocations
-      )
-    )
-      return false;
+export const PreviewMessage = memo(PurePreviewMessage, (prevProps, nextProps) => {
+  if (prevProps.isLoading !== nextProps.isLoading) return false;
+  if (prevProps.message.content !== nextProps.message.content) return false;
+  if (!equal(prevProps.message.toolInvocations, nextProps.message.toolInvocations)) return false;
 
-    // if (!equal(prevProps.vote, nextProps.vote)) return false;
-
-    return true;
-  }
-);
+  return true;
+});
 
 export const ThinkingMessage = () => {
   const role = "assistant";
@@ -239,9 +181,7 @@ export const ThinkingMessage = () => {
         </div>
 
         <div className="flex flex-col gap-2 w-full">
-          <div className="flex flex-col gap-4 text-muted-foreground">
-            Thinking...
-          </div>
+          <div className="flex flex-col gap-4 text-muted-foreground">Pensando...</div>
         </div>
       </div>
     </motion.div>

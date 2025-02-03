@@ -13,11 +13,9 @@ interface ButtonCodeblockProps {
   lang: string;
 }
 
-export default function CodeDisplayBlock({ code, lang }: ButtonCodeblockProps) {
+export default function CodeDisplayBlock({ code }: ButtonCodeblockProps) {
   const [isCopied, setisCopied] = React.useState(false);
   const { theme } = useTheme();
-
-  console.log({ lang });
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(code);
@@ -30,12 +28,7 @@ export default function CodeDisplayBlock({ code, lang }: ButtonCodeblockProps) {
 
   return (
     <div className="relative flex flex-col   text-start  ">
-      <Button
-        onClick={copyToClipboard}
-        variant="ghost"
-        size="icon"
-        className="h-5 w-5 absolute top-2 right-2"
-      >
+      <Button onClick={copyToClipboard} variant="ghost" size="icon" className="h-5 w-5 absolute top-2 right-2">
         {isCopied ? (
           <CheckIcon className="w-4 h-4 scale-100 transition-all" />
         ) : (
@@ -43,11 +36,7 @@ export default function CodeDisplayBlock({ code, lang }: ButtonCodeblockProps) {
         )}
       </Button>
       <CodeBlock
-        customStyle={
-          theme === "dark"
-            ? { background: "#303033" }
-            : { background: "#fcfcfc" }
-        }
+        customStyle={theme === "dark" ? { background: "#303033" } : { background: "#fcfcfc" }}
         text={code}
         language="tsx"
         showLineNumbers={false}

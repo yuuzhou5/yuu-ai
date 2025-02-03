@@ -5,6 +5,8 @@ import { useChat } from "ai/react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 
+import { generateUUID } from "@/lib/utils";
+
 import ChatHeader from "./chat-header";
 import { MessagesList } from "./messages-list";
 import { MultimodalInput } from "./multimodal-input";
@@ -16,24 +18,18 @@ type ChatProps = {
   isReadonly: boolean;
 };
 
-export default function Chat({ id, selectedModelId, isReadonly }: ChatProps) {
+export default function Chat({ id, selectedModelId, isReadonly, initialMessages }: ChatProps) {
   const { mutate } = useSWRConfig();
 
-  const {
-    messages,
-    setMessages,
-    handleSubmit,
-    input,
-    setInput,
-    append,
-    isLoading,
-    stop,
-    reload,
-  } = useChat({
+  const { messages, setMessages, handleSubmit, input, setInput, append, isLoading, stop, reload } = useChat({
     id,
     body: { id, modelId: selectedModelId },
-    onFinish() {
-      mutate("/api/chat/history");
+    initialMessages,
+    experimental_throttle: 100,
+    sendExtraMessageFields: true,
+    generateId: generateUUID,
+    onFinish: () => {
+      mutate("/api/history");
     },
   });
 

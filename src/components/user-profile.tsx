@@ -1,6 +1,8 @@
+"use client";
+
 import { MoonIcon, SunIcon, UserIcon } from "lucide-react";
 import Image from "next/image";
-import { signOut, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { z } from "zod";
 
@@ -13,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 const userSchema = z.object({
   name: z.string(),
@@ -30,13 +33,15 @@ export default function UserProfile() {
 
   if (!session) {
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="size-8 rounded-full">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="outline" size="icon" className="size-8 rounded-full" onClick={() => signIn("google")}>
             <UserIcon className="size-4" />
           </Button>
-        </DropdownMenuTrigger>
-      </DropdownMenu>
+        </TooltipTrigger>
+
+        <TooltipContent side="left">Fazer login</TooltipContent>
+      </Tooltip>
     );
   }
 
@@ -45,25 +50,13 @@ export default function UserProfile() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="rounded-full">
-        <Image
-          src={user.image}
-          alt="User avatar"
-          width={32}
-          height={32}
-          className="rounded-full"
-        />
+        <Image src={user.image} alt="User avatar" width={32} height={32} className="rounded-full" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-[250px]">
         <div className="flex px-2 py-1.5 gap-2">
           <div className="mt-1">
-            <Image
-              src={user.image}
-              alt="User avatar"
-              width={32}
-              height={32}
-              className="rounded-full"
-            />
+            <Image src={user.image} alt="User avatar" width={32} height={32} className="rounded-full" />
           </div>
 
           <div>
@@ -89,10 +82,7 @@ export default function UserProfile() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem
-          className="py-2.5 cursor-pointer"
-          onClick={() => signOut()}
-        >
+        <DropdownMenuItem className="py-2.5 cursor-pointer" onClick={() => signOut()}>
           <span className="text-red-500">Sair</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

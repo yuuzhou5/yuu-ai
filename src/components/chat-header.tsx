@@ -9,9 +9,7 @@ type ChatHeaderProps = {
   selectedModelId: string;
 };
 
-function PureChatHeader({ chatId, selectedModelId }: ChatHeaderProps) {
-  console.log(chatId);
-
+function PureChatHeader({ selectedModelId }: ChatHeaderProps) {
   return (
     <header className="flex sticky top-0 bg-background py-1.5 items-center justify-between px-2 md:px-2 gap-2">
       <div className="flex items-center gap-2">
