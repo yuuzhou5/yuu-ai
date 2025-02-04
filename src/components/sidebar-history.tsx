@@ -69,7 +69,9 @@ const PureChatItem = ({
             </SidebarMenuButton>
           </TooltipTrigger>
 
-          <TooltipContent side="bottom">{chat.title.slice(0, 50)}...</TooltipContent>
+          <TooltipContent side="bottom">
+            {chat.title.slice(0, 50)} {chat.title.length > 50 && "..."}
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
 

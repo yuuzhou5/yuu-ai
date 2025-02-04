@@ -2,7 +2,7 @@ import { JSX } from "react";
 
 import { IconProps, Icons } from "@/components/icons";
 
-type Capability = "image-input";
+type Capability = "image-input" | "tool-calling";
 
 export interface Model {
   id: string;
@@ -16,22 +16,13 @@ export interface Model {
 
 export const models: Array<Model> = [
   {
-    id: "o3-mini",
-    label: "o3 mini",
-    apiIdentifier: "openai:o3-mini",
-    description: "Modelo de raciocínio poderoso e rápido",
-    icon: Icons.OpenAI,
-    disabled: true,
-    capabilities: ["image-input"],
-  },
-  {
     id: "o1-mini",
     label: "o1 mini",
     apiIdentifier: "openai:o1-mini",
     description: "Modelo de raciocínio poderoso e rápido",
     icon: Icons.OpenAI,
-    disabled: true,
-    capabilities: ["image-input"],
+    disabled: false,
+    capabilities: [],
   },
   {
     id: "gpt-4o-mini",
@@ -40,7 +31,7 @@ export const models: Array<Model> = [
     description: "Modelo pequeno para tarefas rápidas e leves",
     icon: Icons.OpenAI,
     disabled: false,
-    capabilities: ["image-input"],
+    capabilities: ["image-input", "tool-calling"],
   },
   {
     id: "gpt-4o",
@@ -49,7 +40,7 @@ export const models: Array<Model> = [
     description: "Para tarefas complexas e de múltiplas etapas",
     icon: Icons.OpenAI,
     disabled: false,
-    capabilities: ["image-input"],
+    capabilities: ["image-input", "tool-calling"],
   },
   {
     id: "deepseek-reasoner",
@@ -76,8 +67,16 @@ export const models: Array<Model> = [
     description: "Rápido e eficiente para tarefas ágeis",
     icon: Icons.Google,
     disabled: false,
-    capabilities: ["image-input"],
+    capabilities: ["image-input", "tool-calling"],
   },
 ] as const;
+
+export function defineCapability(model: Model) {
+  return {
+    can(...abilities: Capability[]) {
+      return abilities.map((i) => model.capabilities.includes(i)).some(Boolean);
+    },
+  };
+}
 
 export const DEFAULT_MODEL_NAME: string = "gpt-4o-mini";

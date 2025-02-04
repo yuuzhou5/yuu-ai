@@ -1,11 +1,6 @@
 "use client";
 
-import type {
-  Attachment,
-  ChatRequestOptions,
-  CreateMessage,
-  Message,
-} from "ai";
+import type { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
 import equal from "fast-deep-equal";
 import { ArrowUpIcon, PaperclipIcon, Pause } from "lucide-react";
 import type React from "react";
@@ -24,7 +19,7 @@ import {
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 
-import { models } from "@/lib/ai/models";
+import { defineCapability, Model, models } from "@/lib/ai/models";
 import { cn, sanitizeUIMessages } from "@/lib/utils";
 
 import { PreviewAttachment } from "./preview-attachment";
@@ -75,10 +70,9 @@ function PureMultimodalInput({
 
   const [optimisticModelId] = useOptimistic(selectedModelId);
 
-  const selectedModel = useMemo(
-    () => models.find((model) => model.id === optimisticModelId),
-    [optimisticModelId]
-  );
+  const selectedModel = useMemo(() => models.find((model) => model.id === optimisticModelId), [optimisticModelId]);
+
+  const { can } = defineCapability(selectedModel as Model);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -89,9 +83,7 @@ function PureMultimodalInput({
   const adjustHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${
-        textareaRef.current.scrollHeight + 2
-      }px`;
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
     }
   };
 
@@ -102,10 +94,7 @@ function PureMultimodalInput({
     }
   };
 
-  const [localStorageInput, setLocalStorageInput] = useLocalStorage(
-    "input",
-    ""
-  );
+  const [localStorageInput, setLocalStorageInput] = useLocalStorage("input", "");
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -145,14 +134,7 @@ function PureMultimodalInput({
     if (width && width > 768) {
       textareaRef.current?.focus();
     }
-  }, [
-    attachments,
-    handleSubmit,
-    setAttachments,
-    setLocalStorageInput,
-    width,
-    chatId,
-  ]);
+  }, [attachments, handleSubmit, setAttachments, setLocalStorageInput, width, chatId]);
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -193,14 +175,9 @@ function PureMultimodalInput({
       try {
         const uploadPromises = files.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined
-        );
+        const successfullyUploadedAttachments = uploadedAttachments.filter((attachment) => attachment !== undefined);
 
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
+        setAttachments((currentAttachments) => [...currentAttachments, ...successfullyUploadedAttachments]);
       } catch (error) {
         console.error("Error uploading files!", error);
       } finally {
@@ -212,11 +189,9 @@ function PureMultimodalInput({
 
   return (
     <div className="relative w-full flex flex-col gap-4">
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions append={append} chatId={chatId} />
-        )}
+      {messages.length === 0 && attachments.length === 0 && uploadQueue.length === 0 && (
+        <SuggestedActions append={append} chatId={chatId} />
+      )}
 
       <input
         type="file"
@@ -281,39 +256,28 @@ function PureMultimodalInput({
       />
 
       <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
-        <AttachmentsButton
-          disabled={!selectedModel?.capabilities.includes("image-input")}
-          fileInputRef={fileInputRef}
-          isLoading={isLoading}
-        />
+        <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} isLoading={isLoading} />
       </div>
 
       <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
         {isLoading ? (
           <StopButton stop={stop} setMessages={setMessages} />
         ) : (
-          <SendButton
-            input={input}
-            submitForm={submitForm}
-            uploadQueue={uploadQueue}
-          />
+          <SendButton input={input} submitForm={submitForm} uploadQueue={uploadQueue} />
         )}
       </div>
     </div>
   );
 }
 
-export const MultimodalInput = memo(
-  PureMultimodalInput,
-  (prevProps, nextProps) => {
-    if (prevProps.input !== nextProps.input) return false;
-    if (prevProps.selectedModelId !== nextProps.selectedModelId) return false;
-    if (prevProps.isLoading !== nextProps.isLoading) return false;
-    if (!equal(prevProps.attachments, nextProps.attachments)) return false;
+export const MultimodalInput = memo(PureMultimodalInput, (prevProps, nextProps) => {
+  if (prevProps.input !== nextProps.input) return false;
+  if (prevProps.selectedModelId !== nextProps.selectedModelId) return false;
+  if (prevProps.isLoading !== nextProps.isLoading) return false;
+  if (!equal(prevProps.attachments, nextProps.attachments)) return false;
 
-    return true;
-  }
-);
+  return true;
+});
 
 function PureAttachmentsButton({
   fileInputRef,
@@ -333,7 +297,7 @@ function PureAttachmentsButton({
             variant="ghost"
             size="icon"
             type="button"
-            className="border cursor-default"
+            className="border cursor-default text-muted-foreground focus:text-muted-foreground hover:text-muted-foreground"
           >
             <PaperclipIcon className="size-4" />
           </Button>
@@ -352,9 +316,7 @@ function PureAttachmentsButton({
         )}
       </TooltipTrigger>
 
-      <TooltipContent side="left">
-        {disabled ? "Desabilitado pelo modo de raciocínio" : "Anexar imagem"}
-      </TooltipContent>
+      <TooltipContent>{disabled ? "Desabilitado pelo modo de raciocínio" : "Anexar imagem"}</TooltipContent>
     </Tooltip>
   );
 }
@@ -408,8 +370,7 @@ function PureSendButton({
 }
 
 const SendButton = memo(PureSendButton, (prevProps, nextProps) => {
-  if (prevProps.uploadQueue.length !== nextProps.uploadQueue.length)
-    return false;
+  if (prevProps.uploadQueue.length !== nextProps.uploadQueue.length) return false;
   if (prevProps.input !== nextProps.input) return false;
   return true;
 });

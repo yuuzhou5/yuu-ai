@@ -5,7 +5,7 @@ import { z } from "zod";
 // import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import { auth } from "@/auth";
 import { modelRegistry } from "@/lib/ai";
-import { models } from "@/lib/ai/models";
+import { defineCapability, models } from "@/lib/ai/models";
 import { systemPrompt } from "@/lib/ai/prompts";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { deleteChatById, getChatById, saveChat, saveMessages } from "@/lib/db/queries";
@@ -77,31 +77,43 @@ export async function POST(req: Request) {
   console.timeEnd("saveChat");
 
   return createDataStreamResponse({
+    onError(error) {
+      console.error(error);
+
+      return "Error";
+    },
     execute: (dataStream) => {
-      console.log(model.apiIdentifier);
+      const { can } = defineCapability(model);
+
+      const tools = can("tool-calling") ? { getWeather } : undefined;
+      const experimental_telemetry = {
+        isEnabled: true,
+        functionId: "stream-text",
+      };
 
       const result = streamText({
         model: modelRegistry.languageModel(model.apiIdentifier),
-        system: systemPrompt,
         messages,
         maxSteps: 5,
+        system: systemPrompt,
+        experimental_telemetry,
         experimental_activeTools: allTools,
         experimental_transform: smoothStream({ chunking: "word" }),
         experimental_generateMessageId: generateUUID,
-        experimental_telemetry: {
-          isEnabled: true,
-          functionId: "stream-text",
-        },
-        tools: {
-          getWeather,
-        },
+
+        tools,
+
         onFinish: async ({ response, usage }) => {
           if (session.user?.id) {
             try {
               const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(response.messages);
 
               const timeTaken = Date.now() - start;
-              const annotations = { latency: timeTaken, model: model.id, usage };
+              const annotations = {
+                latency: timeTaken,
+                model: model.id,
+                usage,
+              };
 
               console.time("saveMessages");
               await saveMessages({
@@ -136,7 +148,9 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const messages = await prisma.message.findMany({ select: { annotations: true } });
+  const messages = await prisma.message.findMany({
+    select: { annotations: true },
+  });
 
   const data = messages.map((i) => i.annotations);
 
