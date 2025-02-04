@@ -38,6 +38,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "./ui/sidebar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 import { Chat } from "@prisma/client";
 
@@ -56,13 +57,21 @@ const PureChatItem = ({
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={isActive}>
-        <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-          {chatModel && <chatModel.icon className="size-4" />}
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SidebarMenuButton asChild isActive={isActive}>
+              <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
+                {chatModel && <chatModel.icon className="size-4" />}
 
-          <span>{chat.title}</span>
-        </Link>
-      </SidebarMenuButton>
+                <span>{chat.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </TooltipTrigger>
+
+          <TooltipContent side="bottom">{chat.title.slice(0, 50)}...</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <DropdownMenu modal={true}>
         <DropdownMenuTrigger asChild>
@@ -98,18 +107,12 @@ function groupThreadsByDate(threads: Chat[]) {
   const todayStart = startOfToday();
   const yesterdayStart = startOfYesterday();
 
-  const todayItems = threads.filter((item) =>
-    isAfter(item.updatedAt, todayStart)
-  );
+  const todayItems = threads.filter((item) => isAfter(item.updatedAt, todayStart));
   const yesterdayItems = threads.filter(
-    (item) =>
-      isAfter(item.updatedAt, yesterdayStart) &&
-      isBefore(item.updatedAt, todayStart)
+    (item) => isAfter(item.updatedAt, yesterdayStart) && isBefore(item.updatedAt, todayStart)
   );
 
-  const thirtyDaysItems = threads.filter((item) =>
-    isBefore(item.updatedAt, yesterdayStart)
-  );
+  const thirtyDaysItems = threads.filter((item) => isBefore(item.updatedAt, yesterdayStart));
 
   const data = [
     { label: "Hoje", items: todayItems },
@@ -172,9 +175,7 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
-          <div className="text-muted-foreground">
-            Faça login para salvar seus chats!
-          </div>
+          <div className="text-muted-foreground">Faça login para salvar seus chats!</div>
         </SidebarGroupContent>
       </SidebarGroup>
     );
@@ -187,10 +188,7 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
         <SidebarGroupContent>
           <div className="flex flex-col">
             {[44, 32, 28, 64, 52].map((item) => (
-              <div
-                key={item}
-                className="rounded-md h-8 flex gap-2 px-2 items-center"
-              >
+              <div key={item} className="rounded-md h-8 flex gap-2 px-2 items-center">
                 <div
                   className="h-4 rounded-md flex-1 max-w-[--skeleton-width] bg-sidebar-accent-foreground/10"
                   style={
@@ -223,10 +221,7 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
     <>
       {history &&
         groupThreadsByDate(history).map((item) => (
-          <SidebarGroup
-            key={item.label}
-            className={cn(item.items.length === 0 && "hidden")}
-          >
+          <SidebarGroup key={item.label} className={cn(item.items.length === 0 && "hidden")}>
             <SidebarGroupLabel>{item.label}</SidebarGroupLabel>
 
             <SidebarGroupContent>
@@ -250,32 +245,6 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
           </SidebarGroup>
         ))}
 
-      {/* <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir chat</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este chat?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-
-            <AlertDialogAction asChild onClick={handleDelete}>
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog> */}
-
-      {/* <DeleteDialog
-        open={showDeleteDialog}
-        onOpenChange={(open) => {
-          setShowDeleteDialog(open);
-        }}
-      /> */}
-
       <AlertDialog
         open={showDeleteDialog}
         onOpenChange={(open) => {
@@ -286,21 +255,13 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir chat</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este chat?
-            </AlertDialogDescription>
+            <AlertDialogDescription>Tem certeza que deseja excluir este chat?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() =>
-                setTimeout(() => (document.body.style.pointerEvents = ""), 300)
-              }
-            >
+            <AlertDialogCancel onClick={() => setTimeout(() => (document.body.style.pointerEvents = ""), 300)}>
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>
-              Deletar
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>Deletar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

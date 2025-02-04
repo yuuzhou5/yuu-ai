@@ -1,9 +1,6 @@
-import {
-  createDataStreamResponse,
-  type Message,
-  smoothStream,
-  streamText,
-} from "ai";
+import { createDataStreamResponse, type Message, smoothStream, streamText } from "ai";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
 // import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import { auth } from "@/auth";
@@ -11,17 +8,11 @@ import { modelRegistry } from "@/lib/ai";
 import { models } from "@/lib/ai/models";
 import { systemPrompt } from "@/lib/ai/prompts";
 import { getWeather } from "@/lib/ai/tools/get-weather";
-import {
-  deleteChatById,
-  getChatById,
-  saveChat,
-  saveMessages,
-} from "@/lib/db/queries";
-import {
-  generateUUID,
-  getMostRecentUserMessage,
-  sanitizeResponseMessages,
-} from "@/lib/utils";
+import { deleteChatById, getChatById, saveChat, saveMessages } from "@/lib/db/queries";
+import { prisma } from "@/lib/prisma";
+import { generateUUID, getMostRecentUserMessage, sanitizeResponseMessages } from "@/lib/utils";
+
+import { generateTitleFromUserMessage } from "../../actions";
 
 import { JsonValue } from "@prisma/client/runtime/library";
 
@@ -35,12 +26,7 @@ const allTools: AllowedTools[] = [...weatherTools];
 export async function POST(req: Request) {
   const start = Date.now();
 
-  const {
-    id,
-    messages,
-    modelId,
-  }: { id: string; messages: Array<Message>; modelId: string } =
-    await req.json();
+  const { id, messages, modelId }: { id: string; messages: Array<Message>; modelId: string } = await req.json();
 
   console.time("session");
   const session = await auth();
@@ -68,12 +54,12 @@ export async function POST(req: Request) {
 
   console.time("saveChat");
   if (!chat) {
-    // const title = await generateTitleFromUserMessage({ message: userMessage });
+    const title = await generateTitleFromUserMessage({ message: userMessage });
 
     await saveChat({
       id,
       userId: session.user.id,
-      title: userMessage.content,
+      title,
       model: model.id,
     });
   }
@@ -84,8 +70,7 @@ export async function POST(req: Request) {
         ...userMessage,
         chatId: id,
         annotations: [],
-        experimental_attachments:
-          userMessage.experimental_attachments as unknown as JsonValue[],
+        experimental_attachments: userMessage.experimental_attachments as unknown as JsonValue[],
       },
     ],
   });
@@ -110,30 +95,27 @@ export async function POST(req: Request) {
         tools: {
           getWeather,
         },
-        onFinish: async ({ response }) => {
+        onFinish: async ({ response, usage }) => {
           if (session.user?.id) {
             try {
-              const responseMessagesWithoutIncompleteToolCalls =
-                sanitizeResponseMessages(response.messages);
+              const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(response.messages);
 
               const timeTaken = Date.now() - start;
-              const annotations = { latency: timeTaken, model: model.id };
+              const annotations = { latency: timeTaken, model: model.id, usage };
 
               console.time("saveMessages");
               await saveMessages({
-                messages: responseMessagesWithoutIncompleteToolCalls.map(
-                  (message) => {
-                    return {
-                      id: message.id,
-                      chatId: id,
-                      role: message.role as string,
-                      content: message.content as JsonValue,
-                      annotations: [annotations],
-                      experimental_attachments: [],
-                      createdAt: new Date(),
-                    };
-                  }
-                ),
+                messages: responseMessagesWithoutIncompleteToolCalls.map((message) => {
+                  return {
+                    id: message.id,
+                    chatId: id,
+                    role: message.role as string,
+                    content: message.content as JsonValue,
+                    annotations: [annotations],
+                    experimental_attachments: [],
+                    createdAt: new Date(),
+                  };
+                }),
               });
               console.timeEnd("saveMessages");
 
@@ -151,6 +133,31 @@ export async function POST(req: Request) {
       result.mergeIntoDataStream(dataStream, { sendReasoning: true });
     },
   });
+}
+
+export async function GET() {
+  const messages = await prisma.message.findMany({ select: { annotations: true } });
+
+  const data = messages.map((i) => i.annotations);
+
+  const latencyReport: Record<string, { totalLatency: number; count: number; averageLatency?: number }> = {};
+
+  data.forEach((arr) => {
+    if (arr.length > 0) {
+      const { model, latency } = z.object({ model: z.string(), latency: z.number() }).parse(arr[0]);
+      if (!latencyReport[model]) {
+        latencyReport[model] = { totalLatency: 0, count: 0 };
+      }
+      latencyReport[model].totalLatency += latency;
+      latencyReport[model].count += 1;
+    }
+  });
+
+  for (const model in latencyReport) {
+    latencyReport[model].averageLatency = latencyReport[model].totalLatency / latencyReport[model].count;
+  }
+
+  return NextResponse.json(latencyReport);
 }
 
 export async function DELETE(req: Request) {

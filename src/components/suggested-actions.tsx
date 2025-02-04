@@ -15,11 +15,18 @@ interface SuggestedActionsProps {
 }
 
 function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0"); // Janeiro é 0
+  const year = now.getFullYear();
+
+  const targetDate = `${day}/${month}/${year - 200}`;
+
   const suggestedActions = [
     {
-      title: "What are the advantages",
-      label: "of using Next.js?",
-      action: "What are the advantages of using Next.js?",
+      title: "O que aconteceu",
+      label: "hoje só que 200 anos atrás?",
+      action: `O que acontenceu em ${targetDate}?`,
     },
     {
       title: "Write code to",
@@ -62,9 +69,7 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
             className="text-left border rounded-xl px-4 py-3.5 text-sm flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start"
           >
             <span className="font-medium">{suggestedAction.title}</span>
-            <span className="text-muted-foreground">
-              {suggestedAction.label}
-            </span>
+            <span className="text-muted-foreground">{suggestedAction.label}</span>
           </Button>
         </motion.div>
       ))}
