@@ -148,30 +148,106 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const messages = await prisma.message.findMany({
-    select: { annotations: true },
-  });
+  try {
+    const MILLION = 1_000_000;
 
-  const data = messages.map((i) => i.annotations);
+    const pricingPerToken: Record<string, { input: number; output: number }> = {
+      "o1-mini": {
+        input: 1.1 / MILLION,
+        output: 4.4 / MILLION,
+      },
+      "gpt-4o-mini": {
+        input: 0.15 / MILLION,
+        output: 0.6 / MILLION,
+      },
+      "gpt-4o": {
+        input: 2.5 / MILLION,
+        output: 10 / MILLION,
+      },
+      "gemini-2.0-flash-exp": {
+        input: 0,
+        output: 0,
+      },
+    };
 
-  const latencyReport: Record<string, { totalLatency: number; count: number; averageLatency?: number }> = {};
+    const AnnotationSchema = z.object({
+      model: z.string(),
+      latency: z.number(),
+      usage: z
+        .object({
+          totalTokens: z.number(),
+          promptTokens: z.number(),
+          completionTokens: z.number(),
+        })
+        .optional(),
+    });
 
-  data.forEach((arr) => {
-    if (arr.length > 0) {
-      const { model, latency } = z.object({ model: z.string(), latency: z.number() }).parse(arr[0]);
-      if (!latencyReport[model]) {
-        latencyReport[model] = { totalLatency: 0, count: 0 };
-      }
-      latencyReport[model].totalLatency += latency;
-      latencyReport[model].count += 1;
-    }
-  });
+    const messages = await prisma.message.findMany({
+      select: {
+        annotations: true,
+      },
+    });
 
-  for (const model in latencyReport) {
-    latencyReport[model].averageLatency = latencyReport[model].totalLatency / latencyReport[model].count;
+    // Agregação ajustada para somar promptTokens e completionTokens separadamente
+    const latencyAndTokenReport = messages
+      .flatMap((message) => message.annotations)
+      .map((annotation) => AnnotationSchema.parse(annotation))
+      .reduce<
+        Record<
+          string,
+          {
+            sumLatency: number;
+            count: number;
+            sumPromptTokens: number;
+            sumCompletionTokens: number;
+          }
+        >
+      >((acc, { model, latency, usage }) => {
+        if (!acc[model]) {
+          acc[model] = {
+            sumLatency: 0,
+            count: 0,
+            sumPromptTokens: 0,
+            sumCompletionTokens: 0,
+          };
+        }
+
+        acc[model].sumLatency += latency;
+        acc[model].count += 1;
+
+        if (usage) {
+          acc[model].sumPromptTokens += usage.promptTokens;
+          acc[model].sumCompletionTokens += usage.completionTokens;
+        }
+
+        return acc;
+      }, {});
+
+    const finalReport = Object.fromEntries(
+      Object.entries(latencyAndTokenReport).map(([model, data]) => {
+        // Busca as taxas de input e output para o modelo atual
+        const pricing = pricingPerToken[model];
+
+        // Calcula o custo total
+        const cost = (pricing?.input || 0) * data.sumPromptTokens + (pricing?.output || 0) * data.sumCompletionTokens;
+
+        return [
+          model,
+          {
+            averageLatency: data.sumLatency / data.count,
+            totalPromptTokens: data.sumPromptTokens > 0 ? data.sumPromptTokens : undefined,
+            totalCompletionTokens: data.sumCompletionTokens > 0 ? data.sumCompletionTokens : undefined,
+            cost: cost > 0 ? cost : undefined, // Inclui o custo somente se for maior que zero
+          },
+        ];
+      })
+    );
+
+    return NextResponse.json(finalReport);
+  } catch (error) {
+    console.error("Erro ao gerar o relatório de latência e tokens:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-
-  return NextResponse.json(latencyReport);
 }
 
 export async function DELETE(req: Request) {

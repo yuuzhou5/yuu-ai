@@ -1,4 +1,4 @@
-import type { Message } from "ai";
+import type { JSONValue, Message } from "ai";
 import { CopyIcon, Volume2 } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
@@ -14,22 +14,45 @@ type MessageActionsProps = {
   isLoading: boolean;
 };
 
-export function PureMessageActions({
-  message,
-  isLoading,
-}: MessageActionsProps) {
+function MessageAnnotations({ annotations }: { annotations?: JSONValue[] }) {
+  if (!annotations) return <></>;
+
+  console.log(annotations);
+
+  const { success, data } = z
+    .object({
+      latency: z.number().optional(),
+      model: z.string().optional(),
+      usage: z
+        .object({
+          totalTokens: z.number(),
+        })
+        .optional(),
+    })
+    .safeParse(annotations[0]);
+
+  if (!success || !data.latency || !data.usage) return <></>;
+
+  const {
+    latency,
+    usage: { totalTokens },
+  } = data;
+
+  const tokensPerSecond = (totalTokens / (latency / 1000)).toFixed(0);
+
+  return (
+    <div className="text-muted-foreground text-xs">
+      <span>{latency} ms</span> &#183; <span>{totalTokens} tokens</span> &#183; <span>{tokensPerSecond} tokens/s</span>
+    </div>
+  );
+}
+
+export function PureMessageActions({ message, isLoading }: MessageActionsProps) {
   const [, copyToClipboard] = useCopyToClipboard();
 
   if (isLoading) return null;
   if (message.role === "user") return null;
-  if (message.toolInvocations && message.toolInvocations.length > 0)
-    return null;
-
-  const { success, data } = z
-    .array(
-      z.object({ latency: z.number().optional(), model: z.string().optional() })
-    )
-    .safeParse(message.annotations);
+  if (message.toolInvocations && message.toolInvocations.length > 0) return null;
 
   return (
     <div className="flex flex-row items-center gap-2">
@@ -69,20 +92,19 @@ export function PureMessageActions({
         <TooltipContent side="bottom">Ouvir</TooltipContent>
       </Tooltip>
 
-      {success && data[0] && (
+      {/* {success && data[0] && (
         <span className="text-muted-foreground text-xs">
           {data[0].model} &#183; {data[0].latency} ms
         </span>
-      )}
+      )} */}
+
+      <MessageAnnotations annotations={message.annotations} />
     </div>
   );
 }
 
-export const MessageActions = memo(
-  PureMessageActions,
-  (prevProps, nextProps) => {
-    if (prevProps.isLoading !== nextProps.isLoading) return false;
+export const MessageActions = memo(PureMessageActions, (prevProps, nextProps) => {
+  if (prevProps.isLoading !== nextProps.isLoading) return false;
 
-    return true;
-  }
-);
+  return true;
+});

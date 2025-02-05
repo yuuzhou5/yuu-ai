@@ -35,7 +35,7 @@ export default function CodeDisplayBLock({ children, className }: React.HTMLAttr
   return inline ? (
     <code className="font-mono bg-secondary rounded-md p-1 text-sm">{children}</code>
   ) : (
-    <div className="not-prose flex flex-col border rounded-md">
+    <div className="not-prose flex flex-col border rounded-md my-2">
       <div className="font-sans text-sm py-1 px-2 bg-secondary flex items-center justify-between w-full">
         <span>{codeLanguage}</span>
 

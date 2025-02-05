@@ -25,7 +25,6 @@ import { cn, sanitizeUIMessages } from "@/lib/utils";
 import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
-import { Textarea } from "./ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 function PureMultimodalInput({
@@ -90,7 +89,7 @@ function PureMultimodalInput({
   const resetHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = "98px";
+      textareaRef.current.style.height = "66px";
     }
   };
 
@@ -99,12 +98,10 @@ function PureMultimodalInput({
   useEffect(() => {
     if (textareaRef.current) {
       const domValue = textareaRef.current.value;
-      // Prefer DOM value over localStorage to handle hydration
       const finalValue = domValue || localStorageInput || "";
       setInput(finalValue);
       adjustHeight();
     }
-    // Only run once after hydration
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -231,40 +228,42 @@ function PureMultimodalInput({
         </div>
       )}
 
-      <Textarea
-        ref={textareaRef}
-        placeholder="Enviar uma mensagem..."
-        value={input}
-        onChange={handleInput}
-        className={cn(
-          "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-11",
-          className
-        )}
-        rows={2}
-        autoFocus
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
+      <div className="bg-muted rounded-2xl">
+        <textarea
+          ref={textareaRef}
+          placeholder="Enviar uma mensagem..."
+          value={input}
+          onChange={handleInput}
+          className={cn(
+            "min-h-[24px] w-full max-h-[calc(45dvh)] outline-none bg-transparent px-3 py-2 overflow-hidden resize-none rounded-2xl !text-base",
+            className
+          )}
+          rows={2}
+          autoFocus
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
 
-            if (isLoading) {
-              toast.error("Please wait for the model to finish its response!");
-            } else {
-              submitForm();
+              if (isLoading) {
+                toast.error("Please wait for the model to finish its response!");
+              } else {
+                submitForm();
+              }
             }
-          }
-        }}
-      />
+          }}
+        />
 
-      <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
-        <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} isLoading={isLoading} />
-      </div>
+        <div className="rounded-2xl pl-3 pr-1 pb-1 flex items-center justify-between">
+          <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} isLoading={isLoading} />
 
-      <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
-        {isLoading ? (
-          <StopButton stop={stop} setMessages={setMessages} />
-        ) : (
-          <SendButton input={input} submitForm={submitForm} uploadQueue={uploadQueue} />
-        )}
+          <div className="p-2 w-fit flex flex-row justify-end">
+            {isLoading ? (
+              <StopButton stop={stop} setMessages={setMessages} />
+            ) : (
+              <SendButton input={input} submitForm={submitForm} uploadQueue={uploadQueue} />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
