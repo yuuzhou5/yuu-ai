@@ -3,6 +3,7 @@
 import type { Attachment, Message } from "ai";
 import { useChat } from "ai/react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 
 import { generateUUID } from "@/lib/utils";
@@ -30,6 +31,13 @@ export default function Chat({ id, selectedModelId, isReadonly, initialMessages 
     generateId: generateUUID,
     onFinish: () => {
       mutate("/api/history");
+    },
+    onError: (error) => {
+      if (error.message === "Unauthorized") {
+        console.log("Não logado");
+      }
+
+      toast.error("Algo deu problema, tente novamente!");
     },
   });
 

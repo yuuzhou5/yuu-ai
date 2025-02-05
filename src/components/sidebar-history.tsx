@@ -1,7 +1,7 @@
 "use client";
 
 import { isAfter, isBefore, startOfToday, startOfYesterday } from "date-fns";
-import { MoreHorizontalIcon, TrashIcon } from "lucide-react";
+import { EyeIcon, MoreHorizontalIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { User } from "next-auth";
@@ -25,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { models } from "@/lib/ai/models";
+// import { models } from "@/lib/ai/models";
 import { cn, fetcher } from "@/lib/utils";
 
 import {
@@ -53,8 +53,6 @@ const PureChatItem = ({
   onDelete: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
-  const chatModel = models.find((model) => model.id === chat.model);
-
   return (
     <SidebarMenuItem>
       <TooltipProvider delayDuration={200}>
@@ -62,7 +60,7 @@ const PureChatItem = ({
           <TooltipTrigger asChild>
             <SidebarMenuButton asChild isActive={isActive}>
               <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-                {chatModel && <chatModel.icon className="size-4" />}
+                {/* {chatModel && <chatModel.icon className="size-4" />} */}
 
                 <span>{chat.title}</span>
               </Link>
@@ -87,6 +85,11 @@ const PureChatItem = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent side="right">
+          <DropdownMenuItem className="cursor-pointer">
+            <EyeIcon />
+            <span>Ver detalhes</span>
+          </DropdownMenuItem>
+
           <DropdownMenuItem
             className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
             onSelect={() => onDelete(chat.id)}

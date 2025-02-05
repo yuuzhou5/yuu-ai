@@ -3,6 +3,7 @@
 import type { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
 import equal from "fast-deep-equal";
 import { ArrowUpIcon, PaperclipIcon, Pause } from "lucide-react";
+import { useSession } from "next-auth/react";
 import type React from "react";
 import {
   type ChangeEvent,
@@ -19,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 
+import { useLoginDialog } from "@/context/login-dialog-context";
 import { defineCapability, Model, models } from "@/lib/ai/models";
 import { cn, sanitizeUIMessages } from "@/lib/utils";
 
@@ -66,6 +68,8 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  const { status } = useSession();
+  const { open } = useLoginDialog();
 
   const [optimisticModelId] = useOptimistic(selectedModelId);
 
@@ -118,6 +122,12 @@ function PureMultimodalInput({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
+    if (status === "unauthenticated") {
+      open();
+
+      return;
+    }
+
     window.history.replaceState({}, "", `/chat/${chatId}`);
 
     handleSubmit(undefined, {
@@ -131,7 +141,7 @@ function PureMultimodalInput({
     if (width && width > 768) {
       textareaRef.current?.focus();
     }
-  }, [attachments, handleSubmit, setAttachments, setLocalStorageInput, width, chatId]);
+  }, [status, chatId, handleSubmit, attachments, setAttachments, setLocalStorageInput, width, open]);
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -296,7 +306,7 @@ function PureAttachmentsButton({
             variant="ghost"
             size="icon"
             type="button"
-            className="border cursor-default text-muted-foreground focus:text-muted-foreground hover:text-muted-foreground"
+            className="border cursor-default p-[7px] opacity-30 text-muted-foreground focus:text-muted-foreground hover:text-muted-foreground"
           >
             <PaperclipIcon className="size-4" />
           </Button>

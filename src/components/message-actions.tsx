@@ -17,34 +17,21 @@ type MessageActionsProps = {
 function MessageAnnotations({ annotations }: { annotations?: JSONValue[] }) {
   if (!annotations) return <></>;
 
-  console.log(annotations);
-
   const { success, data } = z
     .object({
       latency: z.number().optional(),
       model: z.string().optional(),
       usage: z
         .object({
-          totalTokens: z.number(),
+          totalTokens: z.number().nullable(),
         })
         .optional(),
     })
     .safeParse(annotations[0]);
 
-  if (!success || !data.latency || !data.usage) return <></>;
+  if (!success) return <></>;
 
-  const {
-    latency,
-    usage: { totalTokens },
-  } = data;
-
-  const tokensPerSecond = (totalTokens / (latency / 1000)).toFixed(0);
-
-  return (
-    <div className="text-muted-foreground text-xs">
-      <span>{latency} ms</span> &#183; <span>{totalTokens} tokens</span> &#183; <span>{tokensPerSecond} tokens/s</span>
-    </div>
-  );
+  return <div className="text-muted-foreground text-xs">{data.latency && <span>{data.latency} ms</span>}</div>;
 }
 
 export function PureMessageActions({ message, isLoading }: MessageActionsProps) {

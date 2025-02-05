@@ -6,8 +6,6 @@ import SplitText from "./ui/split-text";
 export const Overview = () => {
   const { data: session, status } = useSession();
 
-  console.log(status);
-
   return (
     <motion.div
       key="overview"

@@ -9,16 +9,9 @@ const groq = createOpenAI({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const siliconflow = createOpenAI({
-  baseURL: "https://api.siliconflow.cn/v1",
-  // apiKey: "sk-npuqvioypaaztrkmtcidqknuhqjzdubhltfhssrnbuqjwqqy",
-  apiKey: process.env.SILICON_FLOW_API_KEY,
-});
-
 export const modelRegistry = createProviderRegistry({
   deepseek,
   openai,
   google,
   groq,
-  siliconflow,
 });

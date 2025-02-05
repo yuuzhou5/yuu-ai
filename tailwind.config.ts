@@ -11,6 +11,7 @@ const config: Config = {
     fontFamily: {
       sans: ["var(--font-sans)"],
       mono: ["var(--font-geist-mono)"],
+      geist: ["var(--font-geist-sans)"],
     },
     extend: {
       backgroundImage: {

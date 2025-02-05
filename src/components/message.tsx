@@ -3,10 +3,11 @@
 import type { ChatRequestOptions, Message } from "ai";
 import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
-import { PencilLine, SparklesIcon } from "lucide-react";
-import { memo, useState } from "react";
+import { Copy, PencilLine, SparklesIcon } from "lucide-react";
+import { memo, useMemo, useState } from "react";
+import { toast } from "sonner";
 
-import { cn } from "@/lib/utils";
+import { cn, copyToClipboard } from "@/lib/utils";
 
 import { Markdown } from "./markdown";
 import { MessageActions } from "./message-actions";
@@ -16,6 +17,34 @@ import { Button } from "./ui/button";
 import ShinyText from "./ui/shiny-text";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Weather } from "./weather";
+
+type MessageWithThinking = Message & {
+  finishedThinking?: boolean;
+  think?: string;
+};
+
+function useMessageWithThinking(message: Message): MessageWithThinking {
+  return useMemo(() => {
+    if (message.role === "assistant") {
+      if (message.content.includes("</think>")) {
+        return {
+          ...message,
+          finishedThinking: true,
+          think: message.content.split("</think>")[0].replace("</think>", "").replace("<think>", ""),
+          content: message.content.split("</think>")[1],
+        };
+      } else {
+        return {
+          ...message,
+          finishedThinking: false,
+          think: message.content.replace("<think>", ""),
+          content: "",
+        };
+      }
+    }
+    return message;
+  }, [message]);
+}
 
 const PurePreviewMessage = ({
   chatId,
@@ -33,6 +62,10 @@ const PurePreviewMessage = ({
   isReadonly: boolean;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
+
+  const messageWithThinking = useMessageWithThinking(message);
+
+  const isWithReasoning = message.content.includes("<think>");
 
   return (
     <AnimatePresence>
@@ -59,7 +92,7 @@ const PurePreviewMessage = ({
             </div>
           )}
 
-          <div className="flex flex-col gap-2 w-full max-w-fit">
+          <div className="flex flex-col gap-2 w-full">
             {message.experimental_attachments && (
               <div className="flex flex-row justify-end gap-2">
                 {message.experimental_attachments.map((attachment) => (
@@ -71,35 +104,72 @@ const PurePreviewMessage = ({
             {message.content && mode === "view" && (
               <div className="flex flex-row gap-2 items-center max-w-3xl">
                 {message.role === "user" && !isReadonly && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="px-2 h-fit rounded-full text-muted-foreground opacity-0 group-hover/message:opacity-100"
-                        onClick={() => {
-                          setMode("edit");
-                        }}
-                      >
-                        <PencilLine className="size-4" />
-                      </Button>
-                    </TooltipTrigger>
+                  <>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="px-2 h-fit rounded-full text-muted-foreground opacity-0 group-hover/message:opacity-100"
+                          onClick={async () => {
+                            await copyToClipboard(message.content);
 
-                    <TooltipContent side="left">Editar mensagem</TooltipContent>
-                  </Tooltip>
+                            toast.success("Copiado!");
+                          }}
+                        >
+                          <Copy className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+
+                      <TooltipContent>Copiar</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="px-2 h-fit rounded-full text-muted-foreground opacity-0 group-hover/message:opacity-100"
+                          onClick={async () => {
+                            setMode("edit");
+                          }}
+                        >
+                          <PencilLine className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+
+                      <TooltipContent>Editar mensagem</TooltipContent>
+                    </Tooltip>
+                  </>
                 )}
 
                 <div
-                  className={cn("flex flex-col gap-4 w-full", {
+                  className={cn("flex flex-col w-full", {
                     "bg-secondary px-3 py-2 rounded-xl": message.role === "user",
                   })}
                 >
-                  <Markdown>{message.content as string}</Markdown>
+                  {isWithReasoning && (
+                    <blockquote
+                      className={cn("border-l-4 pl-4 text-muted-foreground mb-4", { hidden: message.role === "user" })}
+                    >
+                      <p className="italic text-sm whitespace-pre-wrap font-geist">
+                        {messageWithThinking.think?.trim()}
+                      </p>
+                    </blockquote>
+                  )}
+
+                  {message.reasoning && (
+                    <blockquote className="border-l-4 pl-4 text-muted-foreground mb-4">
+                      <p className="italic text-sm whitespace-pre-wrap font-geist">{message.reasoning}</p>
+                    </blockquote>
+                  )}
+
+                  <Markdown>{isWithReasoning ? messageWithThinking.content : message.content}</Markdown>
                 </div>
               </div>
             )}
 
             {message.content && mode === "edit" && (
-              <div className="flex flex-row gap-2 items-start">
+              <div className="flex flex-row gap-2 items-start w-full">
                 <div className="size-8" />
 
                 <MessageEditor

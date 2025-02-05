@@ -45,7 +45,7 @@ export const models: Array<Model> = [
   {
     id: "deepseek-reasoner",
     label: "DeepSeek-R1",
-    apiIdentifier: "siliconflow:deepseek-ai/DeepSeek-R1",
+    apiIdentifier: "deepseek:deepseek-reasoner",
     description: "Otimizado para raciocínio e lógica",
     icon: Icons.DeepSeek,
     disabled: true,

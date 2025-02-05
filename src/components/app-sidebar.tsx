@@ -25,7 +25,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
     <Sidebar>
       <SidebarHeader>
         <div className="flex justify-between items-center">
-          <Link href="/">
+          <Link href="/" onClick={() => setOpenMobile(false)}>
             <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">Yuu AI</span>
           </Link>
 
@@ -42,7 +42,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarHistory user={user} />
       </SidebarContent>
 
-      <SidebarFooter className="border-t">
+      <SidebarFooter className="border-t text-sm text-center">
         <SidebarMenuButton>
           <GearIcon className="size-4 mr-1" />
 

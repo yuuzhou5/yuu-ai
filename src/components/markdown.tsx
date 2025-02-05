@@ -2,31 +2,34 @@
 import Link from "next/link";
 import React, { memo } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
+import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+
+import { cn } from "@/lib/utils";
 
 import CodeDisplayBlock from "./code-display-block";
 
 const components: Partial<Components> = {
   code: CodeDisplayBlock,
   pre: ({ children }) => <>{children}</>,
-
   ol: ({ node, children, ...props }) => {
     return (
-      <ol className="list-decimal list-outside ml-4" {...props}>
+      <ol className="list-decimal list-outside ml-4 marker:text-muted-foreground" {...props}>
         {children}
       </ol>
     );
   },
   li: ({ node, children, ...props }) => {
     return (
-      <li className="py-1 my-2" {...props}>
+      <li className="my-2" {...props}>
         {children}
       </li>
     );
   },
   ul: ({ node, children, ...props }) => {
     return (
-      <ul className="list-decimal list-outside ml-4" {...props}>
+      <ul className="list-decimal list-outside" {...props}>
         {children}
       </ul>
     );
@@ -91,11 +94,16 @@ const components: Partial<Components> = {
   },
 };
 
-const remarkPlugins = [remarkGfm];
+// TODO: Add support for LaTex
 
 const NonMemoizedMarkdown = ({ children }: { children: string }) => {
   return (
-    <ReactMarkdown remarkPlugins={remarkPlugins} components={components}>
+    <ReactMarkdown
+      className={cn("prose prose-neutral dark:prose-invert marker:text-muted-foreground prose-ul:mb-2 prose-p:mt-0")}
+      remarkPlugins={[remarkGfm, remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={components}
+    >
       {children}
     </ReactMarkdown>
   );

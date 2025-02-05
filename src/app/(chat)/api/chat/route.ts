@@ -71,6 +71,7 @@ export async function POST(req: Request) {
         chatId: id,
         annotations: [],
         experimental_attachments: userMessage.experimental_attachments as unknown as JsonValue[],
+        reasoning: null,
       },
     ],
   });
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
 
         tools,
 
-        onFinish: async ({ response, usage }) => {
+        onFinish: async ({ response, usage, reasoning }) => {
           if (session.user?.id) {
             try {
               const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(response.messages);
@@ -126,6 +127,7 @@ export async function POST(req: Request) {
                     annotations: [annotations],
                     experimental_attachments: [],
                     createdAt: new Date(),
+                    reasoning: reasoning ? reasoning : null,
                   };
                 }),
               });

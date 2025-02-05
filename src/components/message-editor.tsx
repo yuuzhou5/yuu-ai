@@ -11,20 +11,11 @@ import { Textarea } from "./ui/textarea";
 export type MessageEditorProps = {
   message: Message;
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
-  setMessages: (
-    messages: Message[] | ((messages: Message[]) => Message[])
-  ) => void;
-  reload: (
-    chatRequestOptions?: ChatRequestOptions
-  ) => Promise<string | null | undefined>;
+  setMessages: (messages: Message[] | ((messages: Message[]) => Message[])) => void;
+  reload: (chatRequestOptions?: ChatRequestOptions) => Promise<string | null | undefined>;
 };
 
-export function MessageEditor({
-  message,
-  setMode,
-  setMessages,
-  reload,
-}: MessageEditorProps) {
+export function MessageEditor({ message, setMode, setMessages, reload }: MessageEditorProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const [draftContent, setDraftContent] = useState<string>(message.content);
@@ -39,9 +30,7 @@ export function MessageEditor({
   const adjustHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${
-        textareaRef.current.scrollHeight + 2
-      }px`;
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
     }
   };
 
@@ -67,7 +56,7 @@ export function MessageEditor({
             setMode("view");
           }}
         >
-          Cancel
+          Cancelar
         </Button>
 
         <Button
@@ -100,7 +89,7 @@ export function MessageEditor({
             reload();
           }}
         >
-          {isSubmitting ? "Sending..." : "Send"}
+          {isSubmitting ? "Enviando..." : "Enviar"}
         </Button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { GeistMono } from "geist/font/mono";
+export { GeistSans } from "geist/font/sans";
 import { Inter as FontSans } from "next/font/google";
 
 export const fontMono = GeistMono;
