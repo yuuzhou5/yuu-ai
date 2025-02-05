@@ -84,6 +84,8 @@ const SplitText: React.FC<SplitTextProps> = ({
             const index = words.slice(0, wordIndex).reduce((acc, w) => acc + w.length, 0) + letterIndex;
 
             return (
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-expect-error
               <animated.span
                 key={index}
                 style={springs[index] as unknown as React.CSSProperties}
