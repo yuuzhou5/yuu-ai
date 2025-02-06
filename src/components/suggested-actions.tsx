@@ -35,8 +35,8 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
 
   const suggestedActions = [
     {
-      title: "Astronautas na Idade Média",
-      label: "como explicariam um foguete?",
+      title: "Como astronautas na Idade Média",
+      label: "explicariam um foguete?",
       action: "Astronautas na Idade Média: como explicariam um foguete?",
     },
     {

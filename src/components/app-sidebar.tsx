@@ -13,6 +13,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+import { useConfig } from "./config-dialog";
 import SidebarHistory from "./sidebar-history";
 import { Button } from "./ui/button";
 
@@ -20,6 +21,7 @@ import { GearIcon } from "@radix-ui/react-icons";
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const { setOpenMobile } = useSidebar();
+  const { setDialogOpen } = useConfig();
 
   return (
     <Sidebar>
@@ -43,7 +45,12 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       </SidebarContent>
 
       <SidebarFooter className="border-t text-sm text-center">
-        <SidebarMenuButton>
+        <SidebarMenuButton
+          onClick={() => {
+            setDialogOpen(true);
+            setOpenMobile(false);
+          }}
+        >
           <GearIcon className="size-4 mr-1" />
 
           <span>Configurações</span>
