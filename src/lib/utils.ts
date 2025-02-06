@@ -92,8 +92,6 @@ export function sanitizeResponseMessages(messages: Array<ResponseMessage>): Arra
 
     if (typeof message.content === "string") return message;
 
-    // if (Array.isArray(message.content)) return message;
-
     const sanitizedContent = message.content.filter((content) =>
       content.type === "tool-call"
         ? toolResultIds.includes(content.toolCallId)

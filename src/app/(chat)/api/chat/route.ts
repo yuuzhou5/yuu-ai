@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { modelRegistry } from "@/lib/ai";
 import { defineCapability, models } from "@/lib/ai/models";
 import { systemPrompt } from "@/lib/ai/prompts";
+import { generateImage } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { deleteChatById, getChatById, saveChat, saveMessages } from "@/lib/db/queries";
 import { prisma } from "@/lib/prisma";
@@ -18,15 +19,23 @@ import { JsonValue } from "@prisma/client/runtime/library";
 
 export const maxDuration = 60;
 
-type AllowedTools = "getWeather";
+type AllowedTools = "getWeather" | "generateImage";
 
 const weatherTools: AllowedTools[] = ["getWeather"];
-const allTools: AllowedTools[] = [...weatherTools];
+const imageTools: AllowedTools[] = ["generateImage"];
+const allTools: AllowedTools[] = [...weatherTools, ...imageTools];
+
+type ChatRequestBody = {
+  id: string;
+  messages: Array<Message>;
+  modelId: string;
+  options?: { imageGeneration?: boolean };
+};
 
 export async function POST(req: Request) {
   const start = Date.now();
 
-  const { id, messages, modelId }: { id: string; messages: Array<Message>; modelId: string } = await req.json();
+  const { id, messages, modelId, options }: ChatRequestBody = await req.json();
 
   console.time("session");
   const session = await auth();
@@ -86,22 +95,35 @@ export async function POST(req: Request) {
     execute: (dataStream) => {
       const { can } = defineCapability(model);
 
-      const tools = can("tool-calling") ? { getWeather } : undefined;
+      const tools = can("tool-calling") ? { getWeather, generateImage } : undefined;
       const experimental_telemetry = {
         isEnabled: true,
         functionId: "stream-text",
       };
 
+      const formattedMessages = messages.map((m) => {
+        if (m.role === "assistant" && m.toolInvocations) {
+          m.toolInvocations.forEach((ti) => {
+            if (ti.toolName === "generateImage" && ti.state === "result") {
+              ti.result.image = `redacted-for-length`;
+            }
+          });
+        }
+
+        return m;
+      });
+
       const result = streamText({
         model: modelRegistry.languageModel(model.apiIdentifier),
-        messages,
-        maxSteps: 5,
+        messages: formattedMessages,
+        maxSteps: options?.imageGeneration ? 1 : 5,
         system: systemPrompt,
         experimental_telemetry,
         experimental_activeTools: allTools,
         experimental_transform: smoothStream({ chunking: "word" }),
         experimental_generateMessageId: generateUUID,
 
+        toolChoice: options?.imageGeneration ? { type: "tool", toolName: "generateImage" } : "auto",
         tools,
 
         onFinish: async ({ response, usage, reasoning }) => {

@@ -2,6 +2,7 @@
 
 import type { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
 import equal from "fast-deep-equal";
+import { ImageIcon } from "lucide-react";
 import { ArrowUpIcon, PaperclipIcon, Pause } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type React from "react";
@@ -28,6 +29,30 @@ import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+
+function ImageGenerationButton({
+  isActive,
+  setIsActive,
+}: {
+  setIsActive: Dispatch<SetStateAction<boolean>>;
+  isActive: boolean;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      type="button"
+      className={cn(
+        "rounded-full transition-all duration-200",
+        "border-2 focus-visible:ring-0 focus-visible:ring-offset-0",
+        isActive ? "border-blue-500 text-blue-500 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50" : ""
+      )}
+      onClick={() => setIsActive(!isActive)}
+    >
+      <ImageIcon className={cn("size-4 transition-transform duration-200 mr-2", isActive ? "scale-110" : "")} />
+      Gerar Imagem
+    </Button>
+  );
+}
 
 function PureMultimodalInput({
   chatId,
@@ -70,6 +95,8 @@ function PureMultimodalInput({
   const { width } = useWindowSize();
   const { status } = useSession();
   const { open } = useLoginDialog();
+
+  const [generateImage, setGenerateImage] = useState(false);
 
   const [optimisticModelId] = useOptimistic(selectedModelId);
 
@@ -132,8 +159,11 @@ function PureMultimodalInput({
 
     handleSubmit(undefined, {
       experimental_attachments: attachments,
+
+      body: { options: { imageGeneration: generateImage } },
     });
 
+    setGenerateImage(false);
     setAttachments([]);
     setLocalStorageInput("");
     resetHeight();
@@ -141,7 +171,7 @@ function PureMultimodalInput({
     if (width && width > 768) {
       textareaRef.current?.focus();
     }
-  }, [status, chatId, handleSubmit, attachments, setAttachments, setLocalStorageInput, width, open]);
+  }, [status, chatId, handleSubmit, attachments, generateImage, setAttachments, setLocalStorageInput, width, open]);
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -193,6 +223,52 @@ function PureMultimodalInput({
     },
     [setAttachments]
   );
+
+  const handlePaste = useCallback(
+    async (event: ClipboardEvent) => {
+      if (!can("image-input")) return;
+
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      const imageItems = Array.from(items).filter((item) => item.type.indexOf("image") !== -1);
+
+      if (imageItems.length === 0) return;
+
+      event.preventDefault();
+
+      setUploadQueue(imageItems.map((_, index) => `clipboard-image-${index}.png`));
+
+      try {
+        const uploadPromises = imageItems.map(async (item) => {
+          const blob = item.getAsFile();
+          if (!blob) return;
+
+          const file = new File([blob], `clipboard-image-${Date.now()}.png`, {
+            type: blob.type,
+          });
+
+          return uploadFile(file);
+        });
+
+        const uploadedAttachments = await Promise.all(uploadPromises);
+        const successfullyUploadedAttachments = uploadedAttachments.filter((attachment) => attachment !== undefined);
+
+        setAttachments((currentAttachments) => [...currentAttachments, ...successfullyUploadedAttachments]);
+      } catch (error) {
+        console.error("Error uploading pasted files!", error);
+        toast.error("Failed to upload pasted image!");
+      } finally {
+        setUploadQueue([]);
+      }
+    },
+    [can, setAttachments]
+  );
+
+  useEffect(() => {
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
 
   return (
     <div className="relative w-full flex flex-col gap-4">
@@ -264,7 +340,10 @@ function PureMultimodalInput({
         />
 
         <div className="rounded-2xl pl-3 pr-1 pb-1 flex items-center justify-between">
-          <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} isLoading={isLoading} />
+          <div className="flex items-center gap-2">
+            <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} isLoading={isLoading} />
+            <ImageGenerationButton isActive={generateImage} setIsActive={setGenerateImage} />
+          </div>
 
           <div className="p-2 w-fit flex flex-row justify-end">
             {isLoading ? (

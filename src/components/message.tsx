@@ -12,11 +12,11 @@ import { cn, copyToClipboard } from "@/lib/utils";
 import { Markdown } from "./markdown";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
+import { MessageToolInvocations } from "./message-tool-invocations";
 import { PreviewAttachment } from "./preview-attachment";
 import { Button } from "./ui/button";
 import ShinyText from "./ui/shiny-text";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { Weather } from "./weather";
 
 type MessageWithThinking = Message & {
   finishedThinking?: boolean;
@@ -183,32 +183,7 @@ const PurePreviewMessage = ({
             )}
 
             {message.toolInvocations && message.toolInvocations.length > 0 && (
-              <div className="flex flex-col gap-4">
-                {message.toolInvocations.map((toolInvocation) => {
-                  const { toolName, toolCallId, state } = toolInvocation;
-
-                  if (state === "result") {
-                    const { result } = toolInvocation;
-
-                    return (
-                      <div key={toolCallId}>
-                        {toolName === "getWeather" ? <Weather weatherAtLocation={result} /> : <div>other tool</div>}
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={toolCallId}
-                      className={cn({
-                        skeleton: ["getWeather"].includes(toolName),
-                      })}
-                    >
-                      {toolName === "getWeather" ? <Weather /> : <div>other tool</div>}
-                    </div>
-                  );
-                })}
-              </div>
+              <MessageToolInvocations message={message} />
             )}
 
             {!isReadonly && (
