@@ -29,7 +29,10 @@ type ChatRequestBody = {
   id: string;
   messages: Array<Message>;
   modelId: string;
-  options?: { imageGeneration?: boolean };
+
+  options?: {
+    search?: boolean;
+  };
 };
 
 export async function POST(req: Request) {
@@ -113,17 +116,21 @@ export async function POST(req: Request) {
         return m;
       });
 
+      const modelIdentifier =
+        model.apiIdentifier === "google:gemini-2.0-flash-exp" && options?.search
+          ? "google:gemini-2.0-flash-exp-search"
+          : model.apiIdentifier;
+
       const result = streamText({
-        model: modelRegistry.languageModel(model.apiIdentifier),
+        model: modelRegistry.languageModel(modelIdentifier),
         messages: formattedMessages,
-        maxSteps: options?.imageGeneration ? 1 : 5,
+        maxSteps: 5,
         system: systemPrompt,
         experimental_telemetry,
         experimental_activeTools: allTools,
         experimental_transform: smoothStream({ chunking: "word" }),
         experimental_generateMessageId: generateUUID,
 
-        toolChoice: options?.imageGeneration ? { type: "tool", toolName: "generateImage" } : "auto",
         tools,
 
         onFinish: async ({ response, usage, reasoning }) => {

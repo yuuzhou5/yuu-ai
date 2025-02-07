@@ -22,8 +22,7 @@ export function ModelSelector({
   selectedModelId: string;
 } & React.ComponentProps<typeof Button>) {
   const [open, setOpen] = useState(false);
-  const [optimisticModelId, setOptimisticModelId] =
-    useOptimistic(selectedModelId);
+  const [optimisticModelId, setOptimisticModelId] = useOptimistic(selectedModelId);
 
   const selectedModel = useMemo(
     () => models.find((model) => model.id === optimisticModelId),
@@ -81,9 +80,7 @@ export function ModelSelector({
                   {model.label}
 
                   {model.description && (
-                    <div className="text-xs text-muted-foreground">
-                      {model.description}
-                    </div>
+                    <div className="text-xs text-muted-foreground">{model.description}</div>
                   )}
                 </div>
               </div>

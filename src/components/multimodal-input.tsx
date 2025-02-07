@@ -3,7 +3,7 @@
 import type { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
 import equal from "fast-deep-equal";
 // import { ImageIcon } from "lucide-react";
-import { ArrowUpIcon, PaperclipIcon, Pause } from "lucide-react";
+import { ArrowUpIcon, Globe, PaperclipIcon, Pause } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type React from "react";
 import {
@@ -96,7 +96,8 @@ function PureMultimodalInput({
   const { status } = useSession();
   const { open } = useLoginDialog();
 
-  const [generateImage, setGenerateImage] = useState(false);
+  const [useSearch, setUseSearch] = useState(false);
+  // const [generateImage, setGenerateImage] = useState(false);
 
   const [optimisticModelId] = useOptimistic(selectedModelId);
 
@@ -160,10 +161,10 @@ function PureMultimodalInput({
     handleSubmit(undefined, {
       experimental_attachments: attachments,
 
-      body: { options: { imageGeneration: generateImage } },
+      body: { options: { search: true } },
     });
 
-    setGenerateImage(false);
+    // setGenerateImage(false);
     setAttachments([]);
     setLocalStorageInput("");
     resetHeight();
@@ -171,7 +172,7 @@ function PureMultimodalInput({
     if (width && width > 768) {
       textareaRef.current?.focus();
     }
-  }, [status, chatId, handleSubmit, attachments, generateImage, setAttachments, setLocalStorageInput, width, open]);
+  }, [status, chatId, handleSubmit, attachments, setAttachments, setLocalStorageInput, width, open]);
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -343,6 +344,29 @@ function PureMultimodalInput({
           <div className="flex items-center gap-2">
             <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} isLoading={isLoading} />
             {/* <ImageGenerationButton isActive={generateImage} setIsActive={setGenerateImage} /> */}
+
+            {can("web-search") && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    className={cn(
+                      "size-8",
+                      useSearch
+                        ? "border-2 text-blue-700 hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-300 border-blue-500 bg-blue-300 hover:bg-blue-200 dark:bg-blue-700 dark:hover:bg-blue-600 hover:border-blue-400 rounded-xl"
+                        : "dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200 "
+                    )}
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setUseSearch((prev) => !prev)}
+                  >
+                    <Globe className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+
+                <TooltipContent>{useSearch ? "Desativar" : "Fazer pesquisas na web"}</TooltipContent>
+              </Tooltip>
+            )}
           </div>
 
           <div className="p-2 w-fit flex flex-row justify-end">
@@ -420,7 +444,7 @@ function PureStopButton({
 }) {
   return (
     <Button
-      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      className="rounded-full p-1.5 h-fit border"
       onClick={(event) => {
         event.preventDefault();
         stop();

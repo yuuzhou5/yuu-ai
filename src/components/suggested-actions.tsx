@@ -87,7 +87,7 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
     {
       title: "Quais lugares da China",
       label: "que você acha que todo mundo deveria ir?",
-      action: "O que os Inventores da Revolução Industrial fabricariam com um impressoras 3D?",
+      action: "Quais lugares da China que você acha que todo mundo deveria ir?",
     },
   ];
 

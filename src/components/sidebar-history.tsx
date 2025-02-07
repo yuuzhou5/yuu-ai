@@ -68,7 +68,8 @@ const PureChatItem = ({
           </TooltipTrigger>
 
           <TooltipContent side="bottom">
-            {chat.title.slice(0, 50)} {chat.title.length > 50 && "..."}
+            {chat.title.slice(0, 50)}
+            {chat.title.length > 50 && "..."}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

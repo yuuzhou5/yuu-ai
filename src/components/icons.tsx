@@ -6,13 +6,7 @@ export type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
   Google: (props: IconProps) => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      height="24"
-      viewBox="0 0 24 24"
-      width="24"
-      {...props}
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" {...props}>
       <path
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
         fill="#4285F4"
@@ -133,6 +127,21 @@ export const Icons = {
       <path
         d="M21.67 20.27l-.3.45a72.57 72.57 0 012.37 3.65c.09-.17.19-.34.28-.51-.83-1.36-1.63-2.57-2.35-3.59zm2.96-4.34c.73.91 1.47 1.94 2.25 3.1.1-.16.2-.31.3-.46-.77-1.14-1.52-2.16-2.24-3.06-.11.14-.21.28-.31.42z"
         opacity={0.07}
+      />
+    </svg>
+  ),
+  Anthropic: (props: IconProps) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      x="0px"
+      y="0px"
+      viewBox="0 0 92.2 65"
+      xmlSpace="preserve"
+      {...props}
+    >
+      <path
+        d="M66.5 0H52.4l25.7 65h14.1L66.5 0zM25.7 0L0 65h14.4l5.3-13.6h26.9L51.8 65h14.4L40.5 0H25.7zm-1.4 39.3l8.8-22.8 8.8 22.8H24.3z"
+        className="fill-[#181818] dark:fill-white"
       />
     </svg>
   ),

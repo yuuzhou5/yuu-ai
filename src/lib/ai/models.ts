@@ -2,7 +2,7 @@ import { JSX } from "react";
 
 import { IconProps, Icons } from "@/components/icons";
 
-type Capability = "image-input" | "tool-calling";
+type Capability = "image-input" | "tool-calling" | "web-search";
 
 export interface Model {
   id: string;
@@ -22,7 +22,7 @@ export const models: Array<Model> = [
     description: "Equilibrado e ótimo para tarefas complexas",
     icon: Icons.DeepSeek,
     disabled: false,
-    capabilities: [],
+    capabilities: ["tool-calling"],
   },
   {
     id: "o1-mini",
@@ -76,7 +76,25 @@ export const models: Array<Model> = [
     description: "Rápido e eficiente para tarefas ágeis",
     icon: Icons.Google,
     disabled: false,
-    capabilities: ["image-input", "tool-calling"],
+    capabilities: ["image-input", "tool-calling", "web-search"],
+  },
+  {
+    id: "claude-3-haiku-20240307",
+    label: "Claude 3 Haiku",
+    apiIdentifier: "anthropic:claude-3-haiku-20240307",
+    description: "Rápido e eficiente para tarefas ágeis",
+    icon: Icons.Anthropic,
+    disabled: true,
+    capabilities: ["image-input", "tool-calling", "web-search"],
+  },
+  {
+    id: "claude-3-5-sonnet-20241022",
+    label: "Claude 3.5 Sonnet",
+    apiIdentifier: "anthropic:claude-3-5-sonnet-20241022",
+    description: "Rápido e eficiente para tarefas ágeis",
+    icon: Icons.Anthropic,
+    disabled: false,
+    capabilities: ["image-input", "tool-calling", "web-search"],
   },
 ] as const;
 

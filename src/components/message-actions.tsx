@@ -52,7 +52,7 @@ export function PureMessageActions({ message, isLoading }: MessageActionsProps) 
             onClick={async () => {
               await copyToClipboard(message.content as string);
 
-              toast.success("Copied to clipboard!");
+              toast.success("Copiado!");
             }}
           >
             <CopyIcon className="size-3.5" />
