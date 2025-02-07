@@ -1,10 +1,16 @@
-# Vercel AI SDK, Next.js, OpenAI and shadcn-chat example
+# Yuu AI
 
-This example shows how to use shadcn-chat to build a modern and fully customizable ai-powered streaming chatbot. Built at lightspeed with shadcn-chat components.
+This example show how to combine ShadcnUI + TailwindCSS + Next.JS and Vercel AI SDK.
 
 ## How to use
 
-Execute `create-next-app` with `npm`, `yarn` or `pnpm` to bootstrap this example:
+1. First, clone this repository.
+
+2. Install all the dependencies: `npm install`, `yarn`, `pnpm install` or `bun i`.
+
+3. Add your own api keys in `.env.local`
+
+4.
 
 ```
 npx create-next-app --example https://github.com/jakobhoeg/shadcn-chat/tree/master/examples/shadcn-chat-example-vercel-ai nextjs-shadcn-chat-vercel-ai
