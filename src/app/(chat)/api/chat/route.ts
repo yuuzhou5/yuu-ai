@@ -22,7 +22,7 @@ export const maxDuration = 60;
 type AllowedTools = "getWeather" | "generateImage";
 
 const weatherTools: AllowedTools[] = ["getWeather"];
-const imageTools: AllowedTools[] = ["generateImage"];
+const imageTools: AllowedTools[] = [];
 const allTools: AllowedTools[] = [...weatherTools, ...imageTools];
 
 type ChatRequestBody = {
@@ -171,101 +171,116 @@ export async function POST(req: Request) {
   });
 }
 
+const AnnotationSchema = z.object({
+  model: z.string(),
+  latency: z.number(),
+  usage: z
+    .object({
+      totalTokens: z.number().nullable(),
+      promptTokens: z.number().nullable(),
+      completionTokens: z.number().nullable(),
+    })
+    .optional(),
+});
+
+type Annotation = z.infer<typeof AnnotationSchema>;
+
+type ModelReport = {
+  sumLatency: number;
+  count: number;
+  sumPromptTokens: number;
+  sumCompletionTokens: number;
+};
+
+type FinalReportEntry = {
+  averageLatency: number;
+  totalPromptTokens?: number;
+  totalCompletionTokens?: number;
+  cost?: number;
+};
+
+function processAnnotations(annotations: Annotation[]) {
+  return annotations.reduce<Record<string, ModelReport>>((acc, { model, latency, usage }) => {
+    if (!acc[model]) {
+      acc[model] = { sumLatency: 0, count: 0, sumPromptTokens: 0, sumCompletionTokens: 0 };
+    }
+
+    acc[model].sumLatency += latency;
+    acc[model].count += 1;
+
+    if (usage?.promptTokens != null && usage?.completionTokens != null) {
+      acc[model].sumPromptTokens += usage.promptTokens;
+      acc[model].sumCompletionTokens += usage.completionTokens;
+    }
+
+    return acc;
+  }, {});
+}
+
+function calculateFinalReport(latencyAndTokenReport: Record<string, ModelReport>) {
+  const MILLION = 1_000_000;
+
+  const pricingPerToken: Record<string, { input: number; output: number }> = {
+    "o1-mini": {
+      input: 1.1 / MILLION,
+      output: 4.4 / MILLION,
+    },
+    "gpt-4o-mini": {
+      input: 0.15 / MILLION,
+      output: 0.6 / MILLION,
+    },
+    "gpt-4o": {
+      input: 2.5 / MILLION,
+      output: 10 / MILLION,
+    },
+    "gemini-2.0-flash-exp": {
+      input: 0,
+      output: 0,
+    },
+    "deepseek-reasoner": {
+      input: 0.55 / MILLION,
+      output: 2.19 / MILLION,
+    },
+    "deepseek-chat": {
+      input: 0.14 / MILLION,
+      output: 0.28 / MILLION,
+    },
+  };
+
+  let totalCost = 0;
+
+  const report = Object.fromEntries(
+    Object.entries(latencyAndTokenReport).map(([model, data]) => {
+      const pricing = pricingPerToken[model];
+      const cost = (pricing?.input || 0) * data.sumPromptTokens + (pricing?.output || 0) * data.sumCompletionTokens;
+
+      if (cost > 0) {
+        totalCost += cost;
+      }
+
+      const reportEntry: FinalReportEntry = {
+        averageLatency: data.sumLatency / data.count,
+        totalPromptTokens: data.sumPromptTokens > 0 ? data.sumPromptTokens : undefined,
+        totalCompletionTokens: data.sumCompletionTokens > 0 ? data.sumCompletionTokens : undefined,
+        cost: cost > 0 ? cost : undefined,
+      };
+
+      return [model, reportEntry];
+    })
+  );
+
+  return { ...report, totalCost };
+}
+
 export async function GET() {
   try {
-    const MILLION = 1_000_000;
-
-    const pricingPerToken: Record<string, { input: number; output: number }> = {
-      "o1-mini": {
-        input: 1.1 / MILLION,
-        output: 4.4 / MILLION,
-      },
-      "gpt-4o-mini": {
-        input: 0.15 / MILLION,
-        output: 0.6 / MILLION,
-      },
-      "gpt-4o": {
-        input: 2.5 / MILLION,
-        output: 10 / MILLION,
-      },
-      "gemini-2.0-flash-exp": {
-        input: 0,
-        output: 0,
-      },
-    };
-
-    const AnnotationSchema = z.object({
-      model: z.string(),
-      latency: z.number(),
-      usage: z
-        .object({
-          totalTokens: z.number(),
-          promptTokens: z.number(),
-          completionTokens: z.number(),
-        })
-        .optional(),
-    });
-
     const messages = await prisma.message.findMany({
-      select: {
-        annotations: true,
-      },
+      select: { annotations: true },
     });
-
-    // Agregação ajustada para somar promptTokens e completionTokens separadamente
-    const latencyAndTokenReport = messages
-      .flatMap((message) => message.annotations)
-      .map((annotation) => AnnotationSchema.parse(annotation))
-      .reduce<
-        Record<
-          string,
-          {
-            sumLatency: number;
-            count: number;
-            sumPromptTokens: number;
-            sumCompletionTokens: number;
-          }
-        >
-      >((acc, { model, latency, usage }) => {
-        if (!acc[model]) {
-          acc[model] = {
-            sumLatency: 0,
-            count: 0,
-            sumPromptTokens: 0,
-            sumCompletionTokens: 0,
-          };
-        }
-
-        acc[model].sumLatency += latency;
-        acc[model].count += 1;
-
-        if (usage) {
-          acc[model].sumPromptTokens += usage.promptTokens;
-          acc[model].sumCompletionTokens += usage.completionTokens;
-        }
-
-        return acc;
-      }, {});
-
-    const finalReport = Object.fromEntries(
-      Object.entries(latencyAndTokenReport).map(([model, data]) => {
-        // Busca as taxas de input e output para o modelo atual
-        const pricing = pricingPerToken[model];
-
-        // Calcula o custo total
-        const cost = (pricing?.input || 0) * data.sumPromptTokens + (pricing?.output || 0) * data.sumCompletionTokens;
-
-        return [
-          model,
-          {
-            averageLatency: data.sumLatency / data.count,
-            totalPromptTokens: data.sumPromptTokens > 0 ? data.sumPromptTokens : undefined,
-            totalCompletionTokens: data.sumCompletionTokens > 0 ? data.sumCompletionTokens : undefined,
-            cost: cost > 0 ? cost : undefined, // Inclui o custo somente se for maior que zero
-          },
-        ];
-      })
-    );
+    const annotations = messages.flatMap((message) => message.annotations);
+    const parsedAnnotations = annotations.map((annotation) => AnnotationSchema.parse(annotation));
+    const latencyAndTokenReport = processAnnotations(parsedAnnotations);
+    const finalReport = calculateFinalReport(latencyAndTokenReport);
 
     return NextResponse.json(finalReport);
   } catch (error) {

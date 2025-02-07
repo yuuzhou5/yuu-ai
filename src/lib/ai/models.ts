@@ -16,6 +16,15 @@ export interface Model {
 
 export const models: Array<Model> = [
   {
+    id: "deepseek-v3",
+    label: "DeepSeek V3",
+    apiIdentifier: "deepseek:deepseek-chat",
+    description: "Equilibrado e ótimo para tarefas complexas",
+    icon: Icons.DeepSeek,
+    disabled: false,
+    capabilities: [],
+  },
+  {
     id: "o1-mini",
     label: "o1 mini",
     apiIdentifier: "openai:o1-mini",
@@ -53,7 +62,7 @@ export const models: Array<Model> = [
   },
   {
     id: "deepseek-r1-distill-llama-70b",
-    label: "DeepSeek-R1 > llama-70b",
+    label: "DeepSeek-R1 in Llama-70b",
     apiIdentifier: "groq:deepseek-r1-distill-llama-70b",
     description: "Rápido e equilibrado para tarefas de raciocínio",
     icon: Icons.DeepSeek,

@@ -2,7 +2,7 @@
 
 import type { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
 import equal from "fast-deep-equal";
-import { ImageIcon } from "lucide-react";
+// import { ImageIcon } from "lucide-react";
 import { ArrowUpIcon, PaperclipIcon, Pause } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type React from "react";
@@ -30,29 +30,29 @@ import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-function ImageGenerationButton({
-  isActive,
-  setIsActive,
-}: {
-  setIsActive: Dispatch<SetStateAction<boolean>>;
-  isActive: boolean;
-}) {
-  return (
-    <Button
-      variant="ghost"
-      type="button"
-      className={cn(
-        "rounded-full transition-all duration-200",
-        "border-2 focus-visible:ring-0 focus-visible:ring-offset-0",
-        isActive ? "border-blue-500 text-blue-500 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50" : ""
-      )}
-      onClick={() => setIsActive(!isActive)}
-    >
-      <ImageIcon className={cn("size-4 transition-transform duration-200 mr-2", isActive ? "scale-110" : "")} />
-      Gerar Imagem
-    </Button>
-  );
-}
+// function ImageGenerationButton({
+//   isActive,
+//   setIsActive,
+// }: {
+//   setIsActive: Dispatch<SetStateAction<boolean>>;
+//   isActive: boolean;
+// }) {
+//   return (
+//     <Button
+//       variant="ghost"
+//       type="button"
+//       className={cn(
+//         "rounded-full transition-all duration-200",
+//         "border-2 focus-visible:ring-0 focus-visible:ring-offset-0",
+//         isActive ? "border-blue-500 text-blue-500 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50" : ""
+//       )}
+//       onClick={() => setIsActive(!isActive)}
+//     >
+//       <ImageIcon className={cn("size-4 transition-transform duration-200 mr-2", isActive ? "scale-110" : "")} />
+//       Gerar Imagem
+//     </Button>
+//   );
+// }
 
 function PureMultimodalInput({
   chatId,
@@ -342,7 +342,7 @@ function PureMultimodalInput({
         <div className="rounded-2xl pl-3 pr-1 pb-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} isLoading={isLoading} />
-            <ImageGenerationButton isActive={generateImage} setIsActive={setGenerateImage} />
+            {/* <ImageGenerationButton isActive={generateImage} setIsActive={setGenerateImage} /> */}
           </div>
 
           <div className="p-2 w-fit flex flex-row justify-end">
