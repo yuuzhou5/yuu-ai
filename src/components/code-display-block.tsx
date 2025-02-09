@@ -14,7 +14,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 // TODO: add syntax highlight withou break the whole screen size
 
-export default function CodeDisplayBLock({ children, className }: React.HTMLAttributes<HTMLDivElement>) {
+export default function CodeDisplayBlock({
+  children,
+  className,
+}: React.HTMLAttributes<HTMLDivElement>) {
   // const { theme } = useTheme();
 
   const [copied, setCopied] = useState(false);

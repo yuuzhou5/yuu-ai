@@ -67,7 +67,7 @@ const PureChatItem = ({
             </SidebarMenuButton>
           </TooltipTrigger>
 
-          <TooltipContent side="bottom">
+          <TooltipContent side="right">
             {chat.title.slice(0, 50)}
             {chat.title.length > 50 && "..."}
           </TooltipContent>
@@ -109,20 +109,25 @@ export const ChatItem = memo(PureChatItem, (prevProps, nextProps) => {
   return true;
 });
 
-function groupThreadsByDate(threads: Chat[]) {
+function groupChatsByDate(chats: Chat[]) {
   const todayStart = startOfToday();
   const yesterdayStart = startOfYesterday();
+  const startOfWeek = new Date(todayStart);
+  startOfWeek.setDate(todayStart.getDate() - todayStart.getDay());
 
-  const todayItems = threads.filter((item) => isAfter(item.updatedAt, todayStart));
-  const yesterdayItems = threads.filter(
+  const todayItems = chats.filter((item) => isAfter(item.updatedAt, todayStart));
+  const yesterdayItems = chats.filter(
     (item) => isAfter(item.updatedAt, yesterdayStart) && isBefore(item.updatedAt, todayStart)
   );
-
-  const thirtyDaysItems = threads.filter((item) => isBefore(item.updatedAt, yesterdayStart));
+  const thisWeekItems = chats.filter(
+    (item) => isAfter(item.updatedAt, startOfWeek) && isBefore(item.updatedAt, yesterdayStart)
+  );
+  const thirtyDaysItems = chats.filter((item) => isBefore(item.updatedAt, startOfWeek));
 
   const data = [
     { label: "Hoje", items: todayItems },
     { label: "Ontem", items: yesterdayItems },
+    { label: "Esta semana", items: thisWeekItems },
     { label: "Últimos 30 dias", items: thirtyDaysItems },
   ];
 
@@ -226,7 +231,7 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
   return (
     <>
       {history &&
-        groupThreadsByDate(history).map((item) => (
+        groupChatsByDate(history).map((item) => (
           <SidebarGroup key={item.label} className={cn(item.items.length === 0 && "hidden")}>
             <SidebarGroupLabel>{item.label}</SidebarGroupLabel>
 
@@ -261,10 +266,14 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir chat</AlertDialogTitle>
-            <AlertDialogDescription>Tem certeza que deseja excluir este chat?</AlertDialogDescription>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este chat?
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setTimeout(() => (document.body.style.pointerEvents = ""), 300)}>
+            <AlertDialogCancel
+              onClick={() => setTimeout(() => (document.body.style.pointerEvents = ""), 300)}
+            >
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>Deletar</AlertDialogAction>

@@ -12,7 +12,7 @@ import "katex/dist/katex.min.css";
 
 export const metadata: Metadata = {
   title: "Yuu AI",
-  description: "AI Hub for All LLM Models",
+  description: "AI Hub for LLM Models",
 };
 
 export default function RootLayout({
@@ -31,9 +31,9 @@ export default function RootLayout({
       )}
       suppressHydrationWarning
     >
-      {/* <head>
+      <head>
         <script src="https://unpkg.com/react-scan/dist/auto.global.js" async />
-      </head> */}
+      </head>
 
       <body>
         <SessionProvider>

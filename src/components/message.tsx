@@ -9,7 +9,8 @@ import { toast } from "sonner";
 
 import { cn, copyToClipboard } from "@/lib/utils";
 
-import { Markdown } from "./markdown";
+// import { Markdown } from "./markdown";
+import { MemoizedMarkdown } from "./memoized-markdown";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageToolInvocations } from "./message-tool-invocations";
@@ -30,7 +31,10 @@ function useMessageWithThinking(message: Message): MessageWithThinking {
         return {
           ...message,
           finishedThinking: true,
-          think: message.content.split("</think>")[0].replace("</think>", "").replace("<think>", ""),
+          think: message.content
+            .split("</think>")[0]
+            .replace("</think>", "")
+            .replace("<think>", ""),
           content: message.content.split("</think>")[1],
         };
       } else {
@@ -149,7 +153,9 @@ const PurePreviewMessage = ({
                 >
                   {isWithReasoning && (
                     <blockquote
-                      className={cn("border-l-4 pl-4 text-muted-foreground mb-4", { hidden: message.role === "user" })}
+                      className={cn("border-l-4 pl-4 text-muted-foreground mb-4", {
+                        hidden: message.role === "user",
+                      })}
                     >
                       <p className="italic text-sm whitespace-pre-wrap font-geist">
                         {messageWithThinking.think?.trim()}
@@ -159,11 +165,17 @@ const PurePreviewMessage = ({
 
                   {message.reasoning && (
                     <blockquote className="border-l-4 pl-4 text-muted-foreground mb-4">
-                      <p className="italic text-sm whitespace-pre-wrap font-geist">{message.reasoning}</p>
+                      <p className="italic text-sm whitespace-pre-wrap font-geist">
+                        {message.reasoning}
+                      </p>
                     </blockquote>
                   )}
 
-                  <Markdown>{isWithReasoning ? messageWithThinking.content : message.content}</Markdown>
+                  {/* <Markdown>
+                    {isWithReasoning ? messageWithThinking.content : message.content}
+                  </Markdown> */}
+
+                  <MemoizedMarkdown id={message.id} content={message.content.trim()} />
                 </div>
               </div>
             )}
@@ -187,7 +199,12 @@ const PurePreviewMessage = ({
             )}
 
             {!isReadonly && (
-              <MessageActions key={`action-${message.id}`} chatId={chatId} message={message} isLoading={isLoading} />
+              <MessageActions
+                key={`action-${message.id}`}
+                chatId={chatId}
+                message={message}
+                isLoading={isLoading}
+              />
             )}
           </div>
         </div>
@@ -228,7 +245,7 @@ export const ThinkingMessage = () => {
 
         <div className="flex flex-col gap-2 w-full">
           <div className="flex flex-col gap-4 text-muted-foreground">
-            <ShinyText text="Gerando..." disabled={false} speed={3} />
+            <ShinyText text="Só um segundo..." disabled={false} speed={3} />
           </div>
         </div>
       </div>

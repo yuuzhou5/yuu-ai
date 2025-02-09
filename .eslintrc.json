@@ -6,10 +6,10 @@
       "error",
       {
         "groups": [
-          ["^\\w"], // Bibliotecas externas (react, next, etc.)
-          ["^@/"], // Alias (ex.: @/components, @/lib)
-          ["^\\."], // Imports locais (relativos, ex.: ./ ou ../)
-          ["^.+\\.css$"] // Arquivos de estilo
+          ["^\\w"],
+          ["^@/"], 
+          ["^\\."], 
+          ["^.+\\.css$"] 
         ]
       }
     ],

@@ -2,7 +2,7 @@ import { JSX } from "react";
 
 import { IconProps, Icons } from "@/components/icons";
 
-type Capability = "image-input" | "tool-calling" | "web-search";
+export type Capability = "image-input" | "tool-calling" | "web-search";
 
 export interface Model {
   id: string;
@@ -85,7 +85,7 @@ export const models: Array<Model> = [
     description: "Rápido e eficiente para tarefas ágeis",
     icon: Icons.Anthropic,
     disabled: true,
-    capabilities: ["image-input", "tool-calling", "web-search"],
+    capabilities: ["image-input", "tool-calling"],
   },
   {
     id: "claude-3-5-sonnet-20241022",
@@ -94,7 +94,7 @@ export const models: Array<Model> = [
     description: "Rápido e eficiente para tarefas ágeis",
     icon: Icons.Anthropic,
     disabled: false,
-    capabilities: ["image-input", "tool-calling", "web-search"],
+    capabilities: ["image-input", "tool-calling"],
   },
 ] as const;
 

@@ -31,7 +31,11 @@ function MessageAnnotations({ annotations }: { annotations?: JSONValue[] }) {
 
   if (!success) return <></>;
 
-  return <div className="text-muted-foreground text-xs">{data.latency && <span>{data.latency} ms</span>}</div>;
+  return (
+    <div className="text-muted-foreground text-xs">
+      {data.latency && <span>{data.latency} ms</span>}
+    </div>
+  );
 }
 
 export function PureMessageActions({ message, isLoading }: MessageActionsProps) {
@@ -78,12 +82,6 @@ export function PureMessageActions({ message, isLoading }: MessageActionsProps) 
 
         <TooltipContent side="bottom">Ouvir</TooltipContent>
       </Tooltip>
-
-      {/* {success && data[0] && (
-        <span className="text-muted-foreground text-xs">
-          {data[0].model} &#183; {data[0].latency} ms
-        </span>
-      )} */}
 
       <MessageAnnotations annotations={message.annotations} />
     </div>
