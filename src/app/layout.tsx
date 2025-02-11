@@ -31,9 +31,11 @@ export default function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <head>
-        <script src="https://unpkg.com/react-scan/dist/auto.global.js" async />
-      </head>
+      {process.env.NODE_ENV === "development" && (
+        <head>
+          <script src="https://unpkg.com/react-scan/dist/auto.global.js" async />
+        </head>
+      )}
 
       <body>
         <SessionProvider>
