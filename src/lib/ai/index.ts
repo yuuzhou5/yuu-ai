@@ -4,6 +4,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { deepseek } from "@ai-sdk/deepseek";
 import { google as originalGoogle } from "@ai-sdk/google";
 import { createOpenAI, openai } from "@ai-sdk/openai";
+import { xai } from "@ai-sdk/xai";
 
 const groq = createOpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -26,4 +27,5 @@ export const modelRegistry = createProviderRegistry({
   google,
   groq,
   anthropic,
+  xai,
 });

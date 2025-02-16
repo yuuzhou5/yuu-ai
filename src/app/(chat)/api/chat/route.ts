@@ -136,7 +136,9 @@ export async function POST(req: Request) {
         onFinish: async ({ response, usage, reasoning }) => {
           if (session.user?.id) {
             try {
-              const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(response.messages);
+              const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(
+                response.messages
+              );
 
               const timeTaken = Date.now() - start;
               const annotations = {
@@ -252,6 +254,10 @@ function calculateFinalReport(latencyAndTokenReport: Record<string, ModelReport>
       input: 0.14 / MILLION,
       output: 0.28 / MILLION,
     },
+    "grok-2-1212": {
+      input: 2 / MILLION,
+      output: 10 / MILLION,
+    },
   };
 
   let totalCost = 0;
@@ -259,7 +265,9 @@ function calculateFinalReport(latencyAndTokenReport: Record<string, ModelReport>
   const report = Object.fromEntries(
     Object.entries(latencyAndTokenReport).map(([model, data]) => {
       const pricing = pricingPerToken[model];
-      const cost = (pricing?.input || 0) * data.sumPromptTokens + (pricing?.output || 0) * data.sumCompletionTokens;
+      const cost =
+        (pricing?.input || 0) * data.sumPromptTokens +
+        (pricing?.output || 0) * data.sumCompletionTokens;
 
       if (cost > 0) {
         totalCost += cost;

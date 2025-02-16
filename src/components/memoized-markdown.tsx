@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
 import CodeDisplayBlock from "./code-display-block";
+import { Separator } from "./ui/separator";
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
   const tokens = marked.lexer(markdown);
@@ -16,7 +17,11 @@ const MemoizedMarkdownBlock = memo(
   ({ content, className }: { content: string; className?: string }) => {
     return (
       <ReactMarkdown
-        components={{ code: CodeDisplayBlock, pre: ({ children }) => <>{children}</> }}
+        components={{
+          code: CodeDisplayBlock,
+          pre: ({ children }) => <>{children}</>,
+          hr: () => <Separator className="my-2" />,
+        }}
         className={cn(
           "prose prose-neutral dark:prose-invert max-w-none text-foreground prose-headings:mt-4 prose-headings:mb-2",
           className

@@ -96,6 +96,15 @@ export const models: Array<Model> = [
     disabled: false,
     capabilities: ["image-input", "tool-calling"],
   },
+  {
+    id: "grok-2-1212",
+    label: "Grok 2",
+    apiIdentifier: "xai:grok-2-1212",
+    description: "Rápido e eficiente para tarefas ágeis",
+    icon: Icons.XAi,
+    disabled: false,
+    capabilities: ["image-input", "tool-calling"],
+  },
 ] as const;
 
 export function defineCapability(model: Model) {
