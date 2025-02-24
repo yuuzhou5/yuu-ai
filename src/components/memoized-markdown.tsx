@@ -1,4 +1,6 @@
+import { ExternalLink } from "lucide-react";
 import { marked } from "marked";
+import Link from "next/link";
 import { memo, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -21,6 +23,18 @@ const MemoizedMarkdownBlock = memo(
           code: CodeDisplayBlock,
           pre: ({ children }) => <>{children}</>,
           hr: () => <Separator className="my-2" />,
+          a: ({ children, href }) => {
+            return (
+              <Link
+                target="_blank"
+                rel="noopener noreferrer"
+                href={href as string}
+                className="flex items-center"
+              >
+                {children} <ExternalLink className="size-4 ml-1" />
+              </Link>
+            );
+          },
         }}
         className={cn(
           "prose prose-neutral dark:prose-invert max-w-none text-foreground prose-headings:mt-4 prose-headings:mb-2",

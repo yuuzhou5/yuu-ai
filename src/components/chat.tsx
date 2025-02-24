@@ -2,10 +2,12 @@
 
 import type { Attachment, Message } from "ai";
 import { useChat } from "ai/react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 
+import { siteConfig } from "@/config/site";
 import { generateUUID } from "@/lib/utils";
 
 import ChatHeader from "./chat-header";
@@ -57,7 +59,7 @@ export default function Chat({ id, selectedModelId, isReadonly, initialMessages 
         isReadonly={isReadonly}
       />
 
-      <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
+      <form className="flex flex-col mx-auto px-4 bg-background pb-2 gap-2 w-full md:max-w-3xl">
         {!isReadonly && (
           <MultimodalInput
             chatId={id}
@@ -74,6 +76,20 @@ export default function Chat({ id, selectedModelId, isReadonly, initialMessages 
             selectedModelId={selectedModelId}
           />
         )}
+
+        <div className="text-xs text-muted-foreground flex justify-between">
+          <span>
+            Esse chatbot é{" "}
+            <Link
+              target="_blank"
+              rel="noopener noreferrer"
+              href={siteConfig.links.github}
+              className="underline hover:text-primary duration-200"
+            >
+              open source
+            </Link>
+          </span>
+        </div>
       </form>
     </div>
   );

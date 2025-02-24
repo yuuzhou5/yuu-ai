@@ -1,6 +1,7 @@
 import { memo } from "react";
 
 import { ModelSelector } from "./model-selector";
+import NewChatButton from "./new-chat-button";
 import { SidebarToggle } from "./sidebar-toggle";
 import UserProfile from "./user-profile";
 
@@ -16,6 +17,8 @@ function PureChatHeader({ selectedModelId }: ChatHeaderProps) {
         <SidebarToggle />
 
         <ModelSelector selectedModelId={selectedModelId} />
+
+        <NewChatButton />
       </div>
 
       <UserProfile />

@@ -3,16 +3,42 @@ import { SessionProvider } from "next-auth/react";
 
 import { ConfirmDialogProvider, QueryProvider, ThemeProvider } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
+import { siteConfig } from "@/config/site";
 import { LoginDialogProvider } from "@/context/login-dialog-context";
 import { fontMono, fontSans, GeistSans } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
 import "./globals.css";
-import "katex/dist/katex.min.css";
 
 export const metadata: Metadata = {
-  title: "Yuu AI",
-  description: "AI Hub for LLM Models",
+  title: siteConfig.name,
+  description: siteConfig.description,
+  keywords: [
+    "AI",
+    "ChatBot",
+    "ChatGPT",
+    "Next.js",
+    "React",
+    "TypeScript",
+    "Gemini",
+    "DeepSeek",
+    "Grok",
+    "Anthropic",
+    "Llama",
+  ],
+  authors: [
+    {
+      name: "Yuu",
+      url: "",
+    },
+  ],
+  creator: "Yuu",
+  openGraph: {
+    type: "website",
+    title: siteConfig.name,
+    siteName: siteConfig.name,
+    url: siteConfig.url,
+  },
 };
 
 export default function RootLayout({
