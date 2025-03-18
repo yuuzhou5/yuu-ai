@@ -1,4 +1,5 @@
 import { createDataStreamResponse, type Message, smoothStream, streamText } from "ai";
+import { writeFileSync } from "fs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -15,6 +16,7 @@ import { generateUUID, getMostRecentUserMessage, sanitizeResponseMessages } from
 
 import { generateTitleFromUserMessage } from "../../actions";
 
+import { GoogleGenerativeAIProviderMetadata } from "@ai-sdk/google";
 import { JsonValue } from "@prisma/client/runtime/library";
 
 export const maxDuration = 60;
@@ -38,7 +40,7 @@ type ChatRequestBody = {
 export async function POST(req: Request) {
   const start = Date.now();
 
-  const { id, messages, modelId, options }: ChatRequestBody = await req.json();
+  const { id, messages, modelId }: ChatRequestBody = await req.json();
 
   console.time("session");
   const session = await auth();
@@ -99,6 +101,7 @@ export async function POST(req: Request) {
       const { can } = defineCapability(model);
 
       const tools = can("tool-calling") ? { getWeather, generateImage } : undefined;
+
       const experimental_telemetry = {
         isEnabled: true,
         functionId: "stream-text",
@@ -116,10 +119,7 @@ export async function POST(req: Request) {
         return m;
       });
 
-      const modelIdentifier =
-        model.apiIdentifier === "google:gemini-2.0-flash-exp" && options?.search
-          ? "google:gemini-2.0-flash-exp-search"
-          : model.apiIdentifier;
+      const modelIdentifier = model.apiIdentifier;
 
       const result = streamText({
         model: modelRegistry.languageModel(modelIdentifier),
@@ -133,12 +133,16 @@ export async function POST(req: Request) {
 
         tools,
 
-        onFinish: async ({ response, usage, reasoning }) => {
+        onFinish: async ({ response, usage, reasoning, providerMetadata }) => {
+          if (providerMetadata?.google) {
+            const metadata = providerMetadata.google as unknown as GoogleGenerativeAIProviderMetadata;
+
+            writeFileSync("search.json", JSON.stringify(metadata));
+          }
+
           if (session.user?.id) {
             try {
-              const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(
-                response.messages
-              );
+              const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(response.messages);
 
               const timeTaken = Date.now() - start;
               const annotations = {
@@ -265,9 +269,7 @@ function calculateFinalReport(latencyAndTokenReport: Record<string, ModelReport>
   const report = Object.fromEntries(
     Object.entries(latencyAndTokenReport).map(([model, data]) => {
       const pricing = pricingPerToken[model];
-      const cost =
-        (pricing?.input || 0) * data.sumPromptTokens +
-        (pricing?.output || 0) * data.sumCompletionTokens;
+      const cost = (pricing?.input || 0) * data.sumPromptTokens + (pricing?.output || 0) * data.sumCompletionTokens;
 
       if (cost > 0) {
         totalCost += cost;

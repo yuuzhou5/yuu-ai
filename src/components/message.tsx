@@ -27,24 +27,25 @@ type MessageWithThinking = Message & {
 function useMessageWithThinking(message: Message): MessageWithThinking {
   return useMemo(() => {
     if (message.role === "assistant") {
-      if (message.content.includes("</think>")) {
-        return {
-          ...message,
-          finishedThinking: true,
-          think: message.content
-            .split("</think>")[0]
-            .replace("</think>", "")
-            .replace("<think>", ""),
-          content: message.content.split("</think>")[1],
-        };
-      } else {
-        return {
-          ...message,
-          finishedThinking: false,
-          think: message.content.replace("<think>", ""),
-          content: "",
-        };
+      if (message.content.includes("<think>")) {
+        if (message.content.includes("</think>")) {
+          return {
+            ...message,
+            finishedThinking: true,
+            think: message.content.split("</think>")[0].replace("</think>", "").replace("<think>", ""),
+            content: message.content.split("</think>")[1],
+          };
+        } else {
+          return {
+            ...message,
+            finishedThinking: false,
+            think: message.content.replace("<think>", ""),
+            content: "",
+          };
+        }
       }
+
+      return message;
     }
     return message;
   }, [message]);
@@ -70,6 +71,8 @@ const PurePreviewMessage = ({
   const messageWithThinking = useMessageWithThinking(message);
 
   const isWithReasoning = message.content.includes("<think>");
+
+  console.log(message, messageWithThinking);
 
   return (
     <AnimatePresence>
@@ -165,9 +168,7 @@ const PurePreviewMessage = ({
 
                   {message.reasoning && (
                     <blockquote className="border-l-4 pl-4 text-muted-foreground mb-4">
-                      <p className="italic text-sm whitespace-pre-wrap font-geist">
-                        {message.reasoning}
-                      </p>
+                      <p className="italic text-sm whitespace-pre-wrap font-geist">{message.reasoning}</p>
                     </blockquote>
                   )}
 
@@ -175,7 +176,7 @@ const PurePreviewMessage = ({
                     {isWithReasoning ? messageWithThinking.content : message.content}
                   </Markdown> */}
 
-                  <MemoizedMarkdown id={message.id} content={message.content.trim()} />
+                  <MemoizedMarkdown id={message.id} content={messageWithThinking.content.trim()} />
                 </div>
               </div>
             )}
@@ -199,12 +200,7 @@ const PurePreviewMessage = ({
             )}
 
             {!isReadonly && (
-              <MessageActions
-                key={`action-${message.id}`}
-                chatId={chatId}
-                message={message}
-                isLoading={isLoading}
-              />
+              <MessageActions key={`action-${message.id}`} chatId={chatId} message={message} isLoading={isLoading} />
             )}
           </div>
         </div>

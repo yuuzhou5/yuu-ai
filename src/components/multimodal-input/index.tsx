@@ -80,10 +80,7 @@ function PureMultimodalInput({
 
   const [optimisticModelId] = useOptimistic(selectedModelId);
 
-  const selectedModel = useMemo(
-    () => models.find((model) => model.id === optimisticModelId),
-    [optimisticModelId]
-  );
+  const selectedModel = useMemo(() => models.find((model) => model.id === optimisticModelId), [optimisticModelId]);
 
   const { can } = defineCapability(selectedModel as Model);
   const { handleFileChange, fileInputRef, uploadQueue } = useUpload({ setAttachments, can });
@@ -152,16 +149,7 @@ function PureMultimodalInput({
     if (width && width > 768) {
       textareaRef.current?.focus();
     }
-  }, [
-    status,
-    chatId,
-    handleSubmit,
-    attachments,
-    setAttachments,
-    setLocalStorageInput,
-    width,
-    open,
-  ]);
+  }, [status, chatId, handleSubmit, attachments, setAttachments, setLocalStorageInput, width, open]);
 
   return (
     <div className="relative w-full flex flex-col gap-4">
@@ -234,12 +222,9 @@ function PureMultimodalInput({
 
         <div className="rounded-2xl pl-3 pr-1 pb-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AttachmentsButton
-              disabled={!can("image-input")}
-              fileInputRef={fileInputRef}
-              isLoading={isLoading}
-            />
+            <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} isLoading={isLoading} />
 
+            {/* @deprecated code block */}
             {can("web-search") && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -259,9 +244,7 @@ function PureMultimodalInput({
                   </Button>
                 </TooltipTrigger>
 
-                <TooltipContent>
-                  {useSearch ? "Desativar" : "Fazer pesquisas na web"}
-                </TooltipContent>
+                <TooltipContent>{useSearch ? "Desativar" : "Fazer pesquisas na web"}</TooltipContent>
               </Tooltip>
             )}
           </div>

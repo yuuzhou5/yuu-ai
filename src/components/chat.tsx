@@ -24,25 +24,24 @@ type ChatProps = {
 export default function Chat({ id, selectedModelId, isReadonly, initialMessages }: ChatProps) {
   const { mutate } = useSWRConfig();
 
-  const { messages, setMessages, handleSubmit, input, setInput, append, isLoading, stop, reload } =
-    useChat({
-      id,
-      body: { id, modelId: selectedModelId },
-      initialMessages,
-      experimental_throttle: 100,
-      sendExtraMessageFields: true,
-      generateId: generateUUID,
-      onFinish: () => {
-        mutate("/api/history");
-      },
-      onError: (error) => {
-        if (error.message === "Unauthorized") {
-          console.log("Não logado");
-        }
+  const { messages, setMessages, handleSubmit, input, setInput, append, isLoading, stop, reload } = useChat({
+    id,
+    body: { id, modelId: selectedModelId },
+    initialMessages,
+    experimental_throttle: 100,
+    sendExtraMessageFields: true,
+    generateId: generateUUID,
+    onFinish: () => {
+      mutate("/api/history");
+    },
+    onError: (error) => {
+      if (error.message === "Unauthorized") {
+        console.log("Não logado");
+      }
 
-        toast.error("Algo deu problema, tente novamente!");
-      },
-    });
+      toast.error("Algo deu problema, tente novamente!");
+    },
+  });
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
 
@@ -88,6 +87,7 @@ export default function Chat({ id, selectedModelId, isReadonly, initialMessages 
             >
               open source
             </Link>
+            .
           </span>
         </div>
       </form>

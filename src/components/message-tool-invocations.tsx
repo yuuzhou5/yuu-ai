@@ -16,6 +16,8 @@ const toolNameSchema = z.enum(["getWeather", "generateImage"]);
 export function MessageToolInvocations({ message }: MessageToolInvocationsProps) {
   if (!message.toolInvocations?.length) return null;
 
+  console.log(message);
+
   return (
     <div className="flex flex-col gap-4">
       {message.toolInvocations.map((toolInvocation) => {

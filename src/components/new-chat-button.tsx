@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { PenLine } from "lucide-react";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "./ui/button";
@@ -24,7 +24,7 @@ export default function NewChatButton() {
             >
               <Link href="/">
                 <Button size="icon" variant="outline">
-                  <PenLine className="size-4" />
+                  <Plus className="size-4" />
                 </Button>
               </Link>
             </motion.div>
