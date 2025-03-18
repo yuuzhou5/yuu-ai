@@ -24,10 +24,7 @@ export function ModelSelector({
   const [open, setOpen] = useState(false);
   const [optimisticModelId, setOptimisticModelId] = useOptimistic(selectedModelId);
 
-  const selectedModel = useMemo(
-    () => models.find((model) => model.id === optimisticModelId),
-    [optimisticModelId]
-  );
+  const selectedModel = useMemo(() => models.find((model) => model.id === optimisticModelId), [optimisticModelId]);
 
   const pathname = usePathname();
 
@@ -35,16 +32,9 @@ export function ModelSelector({
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
         asChild
-        className={cn(
-          "w-fit data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
-          className
-        )}
+        className={cn("w-fit data-[state=open]:bg-accent data-[state=open]:text-accent-foreground", className)}
       >
-        <div
-          tabIndex={0}
-          role="button"
-          className="px-2 h-[34px] border rounded-md flex items-center gap-2 cursor-pointer"
-        >
+        <div tabIndex={0} role="button" className="px-2 h-[34px] border rounded-md flex items-center gap-2">
           {selectedModel?.icon && <selectedModel.icon className="size-4" />}
 
           <span className="text-sm">{selectedModel?.label}</span>
@@ -79,9 +69,7 @@ export function ModelSelector({
                 <div className="flex flex-col gap-1 items-start">
                   {model.label}
 
-                  {model.description && (
-                    <div className="text-xs text-muted-foreground">{model.description}</div>
-                  )}
+                  {model.description && <div className="text-xs text-muted-foreground">{model.description}</div>}
                 </div>
               </div>
 

@@ -86,13 +86,13 @@ const PureChatItem = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent side="right">
-          <DropdownMenuItem className="cursor-pointer">
+          <DropdownMenuItem>
             <EyeIcon />
             <span>Ver detalhes</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
+            className="text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
             onSelect={() => onDelete(chat.id)}
           >
             <TrashIcon />
@@ -201,7 +201,7 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
             {[44, 32, 28, 64, 52].map((item) => (
               <div key={item} className="rounded-md h-8 flex gap-2 px-2 items-center">
                 <div
-                  className="h-4 rounded-md flex-1 max-w-[--skeleton-width] bg-sidebar-accent-foreground/10"
+                  className="h-4 rounded-md flex-1 max-w-(--skeleton-width) bg-sidebar-accent-foreground/10"
                   style={
                     {
                       "--skeleton-width": `${item}%`,
@@ -266,14 +266,10 @@ export default function SidebarHistory({ user }: { user: User | undefined }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir chat</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este chat?
-            </AlertDialogDescription>
+            <AlertDialogDescription>Tem certeza que deseja excluir este chat?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => setTimeout(() => (document.body.style.pointerEvents = ""), 300)}
-            >
+            <AlertDialogCancel onClick={() => setTimeout(() => (document.body.style.pointerEvents = ""), 300)}>
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>Deletar</AlertDialogAction>

@@ -69,7 +69,7 @@ export default function UserProfile() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          className="py-2.5 cursor-pointer text-muted-foreground font-medium"
+          className="py-2.5 text-muted-foreground font-medium"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
           <SunIcon className="size-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 mr-2" />
@@ -82,7 +82,7 @@ export default function UserProfile() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem className="py-2.5 cursor-pointer" onClick={() => signOut()}>
+        <DropdownMenuItem className="py-2.5" onClick={() => signOut()}>
           <span className="text-red-500">Sair</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

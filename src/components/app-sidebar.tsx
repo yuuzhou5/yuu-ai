@@ -29,9 +29,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       <SidebarHeader>
         <div className="flex justify-between items-center">
           <Link href="/" onClick={() => setOpenMobile(false)}>
-            <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
-              {siteConfig.name}
-            </span>
+            <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md">{siteConfig.name}</span>
           </Link>
 
           <Button asChild>

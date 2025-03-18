@@ -202,7 +202,7 @@ function PureMultimodalInput({
           value={input}
           onChange={handleInput}
           className={cn(
-            "min-h-[24px] w-full max-h-[calc(45dvh)] outline-none bg-transparent px-3 py-2 overflow-hidden resize-none rounded-2xl !text-base",
+            "min-h-[24px] w-full max-h-[calc(45dvh)] outline-hidden bg-transparent px-3 py-2 overflow-hidden resize-none rounded-2xl text-base!",
             className
           )}
           rows={2}
@@ -234,7 +234,7 @@ function PureMultimodalInput({
                       "size-8",
                       useSearch
                         ? "border-2 text-blue-700 hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-300 border-blue-500 bg-blue-300 hover:bg-blue-200 dark:bg-blue-700 dark:hover:bg-blue-600 hover:border-blue-400 rounded-xl"
-                        : "dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200 "
+                        : "dark:border-zinc-700 dark:hover:bg-zinc-900 hover:bg-zinc-200 "
                     )}
                     variant="ghost"
                     size="icon"

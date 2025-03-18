@@ -52,8 +52,8 @@ export function ExpandableButton({ title, icon: Icon, className, expanded, setEx
           className={cn(
             "relative flex items-center rounded-md p-[7px] h-fit text-sm font-medium transition-colors duration-300",
             expanded
-              ? "border-2 border-blue-500 text-blue-500 rounded-xl !px-2 py-1"
-              : "text-foreground dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200",
+              ? "border-2 border-blue-500 text-blue-500 rounded-xl px-2! py-1"
+              : "text-foreground dark:border-zinc-700 dark:hover:bg-zinc-900 hover:bg-zinc-200",
             className
           )}
         >
