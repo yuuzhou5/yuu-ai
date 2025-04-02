@@ -5,7 +5,7 @@ import { ConfirmDialogProvider, QueryProvider, ThemeProvider } from "@/component
 import { Toaster } from "@/components/ui/sonner";
 import { siteConfig } from "@/config/site";
 import { LoginDialogProvider } from "@/context/login-dialog-context";
-import { fontMono, fontSans, GeistSans } from "@/lib/fonts";
+import { fontVariables } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
 import "./globals.css";
@@ -49,12 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-br"
-      className={cn(
-        "min-h-screen bg-background font-sans antialiased scroll-smooth",
-        fontSans.variable,
-        fontMono.variable,
-        GeistSans.variable
-      )}
+      className={cn("min-h-screen bg-background font-sans antialiased scroll-smooth", fontVariables)}
       suppressHydrationWarning
     >
       {process.env.NODE_ENV === "development" && (

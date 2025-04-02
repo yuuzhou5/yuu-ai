@@ -9,7 +9,6 @@ import { toast } from "sonner";
 
 import { cn, copyToClipboard } from "@/lib/utils";
 
-// import { Markdown } from "./markdown";
 import { MemoizedMarkdown } from "./memoized-markdown";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";

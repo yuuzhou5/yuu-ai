@@ -15,41 +15,32 @@ function parseMarkdownIntoBlocks(markdown: string): string[] {
   return tokens.map((token) => token.raw);
 }
 
-const MemoizedMarkdownBlock = memo(
-  ({ content, className }: { content: string; className?: string }) => {
-    return (
-      <ReactMarkdown
-        components={{
-          code: CodeDisplayBlock,
-          pre: ({ children }) => <>{children}</>,
-          hr: () => <Separator className="my-2" />,
-          a: ({ children, href }) => {
-            return (
-              <Link
-                target="_blank"
-                rel="noopener noreferrer"
-                href={href as string}
-                className="flex items-center"
-              >
-                {children} <ExternalLink className="size-4 ml-1" />
-              </Link>
-            );
-          },
-        }}
-        className={cn(
-          "prose prose-neutral dark:prose-invert max-w-none text-foreground prose-headings:mt-4 prose-headings:mb-2",
-          className
-        )}
-      >
-        {content}
-      </ReactMarkdown>
-    );
-  },
-  (prevProps, nextProps) => {
-    if (prevProps.content !== nextProps.content) return false;
-    return true;
-  }
-);
+function PureMarkdownBlock({ content, className }: { content: string; className?: string }) {
+  return (
+    <ReactMarkdown
+      components={{
+        code: CodeDisplayBlock,
+        pre: ({ children }) => <>{children}</>,
+        hr: () => <Separator className="my-2" />,
+        a: ({ children, href }) => {
+          return (
+            <Link target="_blank" rel="noopener noreferrer" href={href as string} className="flex items-center">
+              {children} <ExternalLink className="size-4 ml-1" />
+            </Link>
+          );
+        },
+      }}
+      className={className}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
+export const MemoizedMarkdownBlock = memo(PureMarkdownBlock, (prevProps, nextProps) => {
+  if (prevProps.content !== nextProps.content) return false;
+  return true;
+});
 
 MemoizedMarkdownBlock.displayName = "MemoizedMarkdownBlock";
 
@@ -58,7 +49,14 @@ export const MemoizedMarkdown = memo(
     const blocks = useMemo(() => parseMarkdownIntoBlocks(content), [content]);
 
     return blocks.map((block, index) => (
-      <MemoizedMarkdownBlock content={block} key={`${id}-block_${index}`} className={className} />
+      <MemoizedMarkdownBlock
+        content={block}
+        key={`${id}-block_${index}`}
+        className={cn(
+          "prose prose-neutral dark:prose-invert max-w-none text-foreground prose-headings:mt-3 prose-headings:mb-1 prose-li:my-0",
+          className
+        )}
+      />
     ));
   }
 );

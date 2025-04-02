@@ -1,11 +1,12 @@
 @import "tailwindcss";
 
 @plugin 'tailwindcss-animate';
+@plugin '@tailwindcss/typography';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-*: initial;
+  /* --font-*: initial; */
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-geist: var(--font-geist-sans);
@@ -183,14 +184,28 @@
   }
 }
 
-pre,
+/* pre,
 code {
   all: unset;
   max-width: 100% !important;
   box-sizing: border-box;
 }
 
-/* Forçar scroll horizontal sem quebrar layout */
+pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+pre::-webkit-scrollbar-thumb {
+  background: #61dafb;
+  border-radius: 4px;
+} */
+
+code {
+  all: unset;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
 pre::-webkit-scrollbar {
   height: 6px;
 }
