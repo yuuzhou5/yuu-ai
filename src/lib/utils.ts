@@ -1,4 +1,4 @@
-import { CoreAssistantMessage, CoreToolMessage, JSONValue, Message, ToolInvocation } from "ai";
+import { CoreAssistantMessage, CoreToolMessage, JSONValue, Message, ToolInvocation, UIMessage } from "ai";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { z } from "zod";
@@ -37,36 +37,7 @@ export const fetcher = async (url: string) => {
   return res.json();
 };
 
-export function sanitizeUIMessages(messages: Array<Message>): Array<Message> {
-  const messagesBySanitizedToolInvocations = messages.map((message) => {
-    if (message.role !== "assistant") return message;
-
-    if (!message.toolInvocations) return message;
-
-    const toolResultIds: Array<string> = [];
-
-    for (const toolInvocation of message.toolInvocations) {
-      if (toolInvocation.state === "result") {
-        toolResultIds.push(toolInvocation.toolCallId);
-      }
-    }
-
-    const sanitizedToolInvocations = message.toolInvocations.filter(
-      (toolInvocation) => toolInvocation.state === "result" || toolResultIds.includes(toolInvocation.toolCallId)
-    );
-
-    return {
-      ...message,
-      toolInvocations: sanitizedToolInvocations,
-    };
-  });
-
-  return messagesBySanitizedToolInvocations.filter(
-    (message) => message.content.length > 0 || (message.toolInvocations && message.toolInvocations.length > 0)
-  );
-}
-
-export function getMostRecentUserMessage(messages: Array<Message>) {
+export function getMostRecentUserMessage(messages: Array<UIMessage>) {
   const userMessages = messages.filter((message) => message.role === "user");
   return userMessages.at(-1);
 }
@@ -74,7 +45,13 @@ export function getMostRecentUserMessage(messages: Array<Message>) {
 type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
 
-export function sanitizeResponseMessages(messages: Array<ResponseMessage>): Array<ResponseMessage> {
+export function sanitizeResponseMessages({
+  messages,
+  reasoning,
+}: {
+  messages: Array<ResponseMessage>;
+  reasoning: string | undefined;
+}) {
   const toolResultIds: Array<string> = [];
 
   for (const message of messages) {
@@ -99,6 +76,11 @@ export function sanitizeResponseMessages(messages: Array<ResponseMessage>): Arra
         ? content.text.length > 0
         : true
     );
+
+    if (reasoning) {
+      // @ts-expect-error: reasoning message parts in sdk is wip
+      sanitizedContent.push({ type: "reasoning", reasoning });
+    }
 
     return {
       ...message,
@@ -208,4 +190,12 @@ export async function copyToClipboard(text: string) {
   } catch (err) {
     console.error("Erro ao copiar: ", err);
   }
+}
+
+export function getTrailingMessageId({ messages }: { messages: Array<ResponseMessage> }): string | null {
+  const trailingMessage = messages.at(-1);
+
+  if (!trailingMessage) return null;
+
+  return trailingMessage.id;
 }

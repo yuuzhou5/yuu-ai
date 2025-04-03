@@ -82,6 +82,7 @@ model Message {
   updatedAt                DateTime @updatedAt
   annotations              Json[]
   experimental_attachments Json[]
+  parts                    Json[]
   reasoning                String?
   chat                     Chat     @relation(fields: [chatId], references: [id])
 }

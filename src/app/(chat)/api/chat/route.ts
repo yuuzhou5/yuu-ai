@@ -1,35 +1,27 @@
-import { createDataStreamResponse, type Message, smoothStream, streamText } from "ai";
-import { writeFileSync } from "fs";
+import { appendResponseMessages, createDataStreamResponse, smoothStream, streamText, UIMessage } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-// import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import { auth } from "@/auth";
 import { modelRegistry } from "@/lib/ai";
 import { defineCapability, models } from "@/lib/ai/models";
 import { systemPrompt } from "@/lib/ai/prompts";
 import { generateImage } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
+import { search } from "@/lib/ai/tools/search";
 import { deleteChatById, getChatById, saveChat, saveMessages } from "@/lib/db/queries";
 import { prisma } from "@/lib/prisma";
-import { generateUUID, getMostRecentUserMessage, sanitizeResponseMessages } from "@/lib/utils";
+import { generateUUID, getMostRecentUserMessage, getTrailingMessageId } from "@/lib/utils";
 
 import { generateTitleFromUserMessage } from "../../actions";
 
-import { GoogleGenerativeAIProviderMetadata } from "@ai-sdk/google";
-import { JsonValue } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 
 export const maxDuration = 60;
 
-type AllowedTools = "getWeather" | "generateImage";
-
-const weatherTools: AllowedTools[] = ["getWeather"];
-const imageTools: AllowedTools[] = [];
-const allTools: AllowedTools[] = [...weatherTools, ...imageTools];
-
 type ChatRequestBody = {
   id: string;
-  messages: Array<Message>;
+  messages: Array<UIMessage>;
   modelId: string;
 
   options?: {
@@ -76,73 +68,62 @@ export async function POST(req: Request) {
       title,
       model: model.id,
     });
+  } else {
+    if (chat.userId !== session.user.id) {
+      return new Response("Unauthorized", { status: 401 });
+    }
   }
 
   await saveMessages({
     messages: [
       {
-        ...userMessage,
         chatId: id,
+        id: userMessage.id,
+        role: "user",
         annotations: [],
-        experimental_attachments: userMessage.experimental_attachments as unknown as JsonValue[],
+        experimental_attachments: (userMessage.experimental_attachments ?? []) as unknown as Prisma.JsonArray,
         reasoning: null,
+        content: null,
+        parts: userMessage.parts as Prisma.JsonArray,
       },
     ],
   });
   console.timeEnd("saveChat");
 
   return createDataStreamResponse({
-    onError(error) {
-      console.error(error);
-
-      return "Error";
-    },
     execute: (dataStream) => {
       const { can } = defineCapability(model);
 
-      const tools = can("tool-calling") ? { getWeather, generateImage } : undefined;
+      const tools = can("tool-calling") ? { getWeather, generateImage, search } : undefined;
 
       const experimental_telemetry = {
         isEnabled: true,
         functionId: "stream-text",
       };
 
-      const formattedMessages = messages.map((m) => {
-        if (m.role === "assistant" && m.toolInvocations) {
-          m.toolInvocations.forEach((ti) => {
-            if (ti.toolName === "generateImage" && ti.state === "result") {
-              ti.result.image = `redacted-for-length`;
-            }
-          });
-        }
-
-        return m;
-      });
-
       const modelIdentifier = model.apiIdentifier;
 
       const result = streamText({
         model: modelRegistry.languageModel(modelIdentifier),
-        messages: formattedMessages,
+        messages,
         maxSteps: 5,
         system: systemPrompt,
         experimental_telemetry,
-        experimental_activeTools: allTools,
         experimental_transform: smoothStream({ chunking: "word" }),
         experimental_generateMessageId: generateUUID,
 
         tools,
 
-        onFinish: async ({ response, usage, reasoning, providerMetadata }) => {
-          if (providerMetadata?.google) {
-            const metadata = providerMetadata.google as unknown as GoogleGenerativeAIProviderMetadata;
-
-            writeFileSync("search.json", JSON.stringify(metadata));
-          }
-
+        onFinish: async ({ response, usage }) => {
           if (session.user?.id) {
             try {
-              const responseMessagesWithoutIncompleteToolCalls = sanitizeResponseMessages(response.messages);
+              const assistantId = getTrailingMessageId({
+                messages: response.messages.filter((message) => message.role === "assistant"),
+              });
+
+              if (!assistantId) {
+                throw new Error("No assistant message found!");
+              }
 
               const timeTaken = Date.now() - start;
               const annotations = {
@@ -151,20 +132,28 @@ export async function POST(req: Request) {
                 usage,
               };
 
+              const [, assistantMessage] = appendResponseMessages({
+                messages: [userMessage],
+                responseMessages: response.messages,
+              });
+
+              console.log({ assistantMessage }, assistantMessage.parts);
+
               console.time("saveMessages");
               await saveMessages({
-                messages: responseMessagesWithoutIncompleteToolCalls.map((message) => {
-                  return {
-                    id: message.id,
+                messages: [
+                  {
+                    id: assistantId,
                     chatId: id,
-                    role: message.role as string,
-                    content: message.content as JsonValue,
-                    annotations: [annotations],
-                    experimental_attachments: [],
-                    createdAt: new Date(),
-                    reasoning: reasoning ? reasoning : null,
-                  };
-                }),
+                    role: assistantMessage.role,
+                    parts: (assistantMessage.parts ?? []) as Prisma.JsonArray,
+                    experimental_attachments: (assistantMessage.experimental_attachments ??
+                      []) as unknown as Prisma.JsonArray,
+                    content: null,
+                    annotations: [],
+                    reasoning: null,
+                  },
+                ],
               });
               console.timeEnd("saveMessages");
 
@@ -180,6 +169,11 @@ export async function POST(req: Request) {
       });
 
       result.mergeIntoDataStream(dataStream, { sendReasoning: true });
+    },
+    onError(error) {
+      console.error(error);
+
+      return "error";
     },
   });
 }

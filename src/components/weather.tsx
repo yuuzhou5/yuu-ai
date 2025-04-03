@@ -249,13 +249,16 @@ export function Weather({ weatherAtLocation = SAMPLE }: { weatherAtLocation?: We
           </div>
         </div>
 
-        <div className="text-blue-50">{`H:${n(currentHigh)}° L:${n(currentLow)}°`}</div>
+        <div className="space-x-2">
+          <span>{n(currentHigh)}°C</span>
+          <span className="text-white/60">{n(currentLow)}°C</span>
+        </div>
       </div>
 
       <div className="flex flex-row justify-between">
         {displayTimes.map((time, index) => (
           <div key={time} className="flex flex-col items-center gap-1">
-            <div className="text-blue-100 text-xs">{format(new Date(time), "ha")}</div>
+            <div className="text-blue-100 text-xs">{format(new Date(time), "HH:mm")}</div>
             <div
               className={cn(
                 "size-6 rounded-full skeleton-div",

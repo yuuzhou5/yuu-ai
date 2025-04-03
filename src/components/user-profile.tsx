@@ -1,6 +1,6 @@
 "use client";
 
-import { MoonIcon, SunIcon, UserIcon } from "lucide-react";
+import { LogOut, MoonIcon, SunIcon, UserIcon } from "lucide-react";
 import Image from "next/image";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
@@ -68,12 +68,9 @@ export default function UserProfile() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem
-          className="py-2.5 text-muted-foreground font-medium"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        >
-          <SunIcon className="size-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 mr-2" />
-          <MoonIcon className="absolute size-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 mr-2" />
+        <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+          <SunIcon className="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <MoonIcon className="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
 
           <span>Mudar tema</span>
 
@@ -82,8 +79,9 @@ export default function UserProfile() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem className="py-2.5" onClick={() => signOut()}>
-          <span className="text-red-500">Sair</span>
+        <DropdownMenuItem onClick={() => signOut()}>
+          <LogOut />
+          Sair
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

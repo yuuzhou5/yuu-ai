@@ -5,14 +5,9 @@
     "simple-import-sort/imports": [
       "error",
       {
-        "groups": [
-          ["^\\w"],
-          ["^@/"], 
-          ["^\\."], 
-          ["^.+\\.css$"] 
-        ]
+        "groups": [["^\\w"], ["^@/"], ["^\\."], ["^.+\\.css$"]]
       }
     ],
-    "simple-import-sort/exports": "error"
+    "simple-import-sort/exports": "warn"
   }
 }

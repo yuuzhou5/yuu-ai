@@ -66,7 +66,7 @@ export const models: Array<Model> = [
     apiIdentifier: "groq:deepseek-r1-distill-llama-70b",
     description: "Rápido e equilibrado para tarefas de raciocínio",
     icon: Icons.DeepSeek,
-    disabled: false,
+    disabled: true,
     capabilities: [],
   },
   {

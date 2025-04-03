@@ -14,7 +14,8 @@ function PureSendButton({
 }) {
   return (
     <Button
-      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      size="icon"
+      className="rounded-full p-1.5 h-fit border size-8"
       onClick={(event) => {
         event.preventDefault();
         submitForm();

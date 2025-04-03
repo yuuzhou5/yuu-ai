@@ -195,7 +195,7 @@ function PureMultimodalInput({
         </div>
       )}
 
-      <div className="bg-muted rounded-2xl">
+      <div className="bg-card border rounded-2xl">
         <textarea
           ref={textareaRef}
           placeholder="Enviar uma mensagem..."
