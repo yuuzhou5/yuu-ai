@@ -1,7 +1,6 @@
 "use client";
 
 import type { Attachment, Message } from "ai";
-import { useChat } from "ai/react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,6 +13,8 @@ import ChatHeader from "./chat-header";
 import { MessagesList } from "./messages-list";
 import { MultimodalInput } from "./multimodal-input";
 
+import { useChat } from "@ai-sdk/react";
+
 type ChatProps = {
   id: string;
   selectedModelId: string;
@@ -24,7 +25,7 @@ type ChatProps = {
 export default function Chat({ id, selectedModelId, isReadonly, initialMessages }: ChatProps) {
   const { mutate } = useSWRConfig();
 
-  const { messages, setMessages, handleSubmit, input, setInput, append, isLoading, stop, reload } = useChat({
+  const { messages, setMessages, handleSubmit, input, setInput, append, stop, reload, status } = useChat({
     id,
     body: { id, modelId: selectedModelId },
     initialMessages,
@@ -46,16 +47,16 @@ export default function Chat({ id, selectedModelId, isReadonly, initialMessages 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
 
   return (
-    <div className="flex flex-col min-w-0 h-dvh bg-background">
+    <div className="flex flex-col min-w-0 h-dvh bg-background overflow-y-hidden">
       <ChatHeader chatId={id} selectedModelId={selectedModelId} />
 
       <MessagesList
         chatId={id}
-        isLoading={isLoading}
         messages={messages}
         setMessages={setMessages}
         reload={reload}
         isReadonly={isReadonly}
+        status={status}
       />
 
       <form className="flex flex-col mx-auto px-4 bg-background pb-2 gap-2 w-full md:max-w-3xl">
@@ -65,7 +66,6 @@ export default function Chat({ id, selectedModelId, isReadonly, initialMessages 
             input={input}
             setInput={setInput}
             handleSubmit={handleSubmit}
-            isLoading={isLoading}
             stop={stop}
             attachments={attachments}
             setAttachments={setAttachments}
@@ -73,6 +73,7 @@ export default function Chat({ id, selectedModelId, isReadonly, initialMessages 
             setMessages={setMessages}
             append={append}
             selectedModelId={selectedModelId}
+            status={status}
           />
         )}
 

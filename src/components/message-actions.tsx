@@ -1,6 +1,6 @@
-import type { JSONValue, Message } from "ai";
-import { CopyIcon, Volume2 } from "lucide-react";
-import { memo } from "react";
+import type { UIMessage } from "ai";
+import { Check, CopyIcon, Volume2 } from "lucide-react";
+import { memo, useState } from "react";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
 import { z } from "zod";
@@ -9,12 +9,12 @@ import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type MessageActionsProps = {
-  chatId: string;
-  message: Message;
   isLoading: boolean;
+  text: string;
+  annotations: UIMessage["annotations"];
 };
 
-function MessageAnnotations({ annotations }: { annotations?: JSONValue[] }) {
+function MessageAnnotations({ annotations }: { annotations?: UIMessage["annotations"] }) {
   if (!annotations) return <></>;
 
   const { success, data } = z
@@ -31,35 +31,33 @@ function MessageAnnotations({ annotations }: { annotations?: JSONValue[] }) {
 
   if (!success) return <></>;
 
-  return (
-    <div className="text-muted-foreground text-xs">
-      {data.latency && <span>{data.latency} ms</span>}
-    </div>
-  );
+  return <div className="text-muted-foreground text-xs">{data.latency && <span>{data.latency} ms</span>}</div>;
 }
 
-export function PureMessageActions({ message, isLoading }: MessageActionsProps) {
+export function PureMessageActions({ isLoading, text, annotations }: MessageActionsProps) {
   const [, copyToClipboard] = useCopyToClipboard();
 
-  if (isLoading) return null;
-  if (message.role === "user") return null;
-  if (message.toolInvocations && message.toolInvocations.length > 0) return null;
+  const [copied, setCopied] = useState(false);
+
+  if (isLoading) return <></>;
+
+  async function copy() {
+    await copyToClipboard(text);
+
+    toast.success("Copiado!");
+    setCopied(true);
+
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   return (
     <div className="flex flex-row items-center gap-2">
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            className="text-muted-foreground size-7"
-            variant="outline"
-            size="icon"
-            onClick={async () => {
-              await copyToClipboard(message.content as string);
+          <Button className="text-muted-foreground size-7" variant="outline" size="icon" onClick={copy}>
+            {copied ? <Check className="size-3.5" /> : <CopyIcon className="size-3.5" />}
 
-              toast.success("Copiado!");
-            }}
-          >
-            <CopyIcon className="size-3.5" />
+            <span className="sr-only">Copiar texto</span>
           </Button>
         </TooltipTrigger>
 
@@ -77,13 +75,15 @@ export function PureMessageActions({ message, isLoading }: MessageActionsProps) 
             }}
           >
             <Volume2 className="size-3.5" />
+
+            <span className="sr-only">Falar texto</span>
           </Button>
         </TooltipTrigger>
 
         <TooltipContent side="bottom">Ouvir</TooltipContent>
       </Tooltip>
 
-      <MessageAnnotations annotations={message.annotations} />
+      <MessageAnnotations annotations={annotations} />
     </div>
   );
 }

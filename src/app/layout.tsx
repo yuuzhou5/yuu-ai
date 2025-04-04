@@ -58,7 +58,7 @@ export default function RootLayout({
         </head>
       )}
 
-      <body>
+      <body className="overflow-y-hidden">
         <SessionProvider>
           <QueryProvider>
             <ConfirmDialogProvider>

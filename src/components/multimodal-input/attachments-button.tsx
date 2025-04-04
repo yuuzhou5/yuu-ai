@@ -4,15 +4,15 @@ import { memo } from "react";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
-function PureAttachmentsButton({
-  fileInputRef,
-  isLoading,
-  disabled,
-}: {
+import { UseChatHelpers } from "@ai-sdk/react";
+
+type AttachmentsButtonProps = {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  isLoading: boolean;
   disabled?: boolean;
-}) {
+  status: UseChatHelpers["status"];
+};
+
+function PureAttachmentsButton({ fileInputRef, status, disabled }: AttachmentsButtonProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -33,7 +33,7 @@ function PureAttachmentsButton({
               event.preventDefault();
               fileInputRef.current?.click();
             }}
-            disabled={isLoading || disabled}
+            disabled={status !== "ready" || disabled}
             variant="ghost"
           >
             <PaperclipIcon className="size-4" />
@@ -41,9 +41,7 @@ function PureAttachmentsButton({
         )}
       </TooltipTrigger>
 
-      <TooltipContent>
-        {disabled ? "Desabilitado para este modelo" : "Anexar imagem"}
-      </TooltipContent>
+      <TooltipContent>{disabled ? "Desabilitado para este modelo" : "Anexar imagem"}</TooltipContent>
     </Tooltip>
   );
 }

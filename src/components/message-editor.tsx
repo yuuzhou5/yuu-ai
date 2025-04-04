@@ -8,10 +8,12 @@ import { deleteTrailingMessages } from "@/app/(chat)/actions";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 
+import { UseChatHelpers } from "@ai-sdk/react";
+
 export type MessageEditorProps = {
   message: Message;
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
-  setMessages: (messages: Message[] | ((messages: Message[]) => Message[])) => void;
+  setMessages: UseChatHelpers["setMessages"];
   reload: (chatRequestOptions?: ChatRequestOptions) => Promise<string | null | undefined>;
 };
 

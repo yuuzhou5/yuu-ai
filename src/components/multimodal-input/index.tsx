@@ -1,6 +1,6 @@
 "use client";
 
-import type { Attachment, ChatRequestOptions, CreateMessage, Message } from "ai";
+import type { Attachment, UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { Globe } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -32,35 +32,28 @@ import SendButton from "./send-button";
 import StopButton from "./stop-button";
 import { useUpload } from "./use-upload";
 
+import { UseChatHelpers } from "@ai-sdk/react";
+
 type MultimodalInputProps = {
   chatId: string;
   input: string;
-  setInput: (value: string) => void;
-  isLoading: boolean;
-  stop: () => void;
-  attachments: Array<Attachment>;
-  setAttachments: Dispatch<SetStateAction<Array<Attachment>>>;
-  messages: Array<Message>;
-  setMessages: Dispatch<SetStateAction<Array<Message>>>;
-  append: (
-    message: Message | CreateMessage,
-    chatRequestOptions?: ChatRequestOptions
-  ) => Promise<string | null | undefined>;
-  handleSubmit: (
-    event?: {
-      preventDefault?: () => void;
-    },
-    chatRequestOptions?: ChatRequestOptions
-  ) => void;
   className?: string;
   selectedModelId: string;
+  attachments: Array<Attachment>;
+  setAttachments: Dispatch<SetStateAction<Array<Attachment>>>;
+  messages: Array<UIMessage>;
+  setMessages: UseChatHelpers["setMessages"];
+  stop: UseChatHelpers["stop"];
+  setInput: UseChatHelpers["setInput"];
+  append: UseChatHelpers["append"];
+  handleSubmit: UseChatHelpers["handleSubmit"];
+  status: UseChatHelpers["status"];
 };
 
 function PureMultimodalInput({
   chatId,
   input,
   setInput,
-  isLoading,
   stop,
   attachments,
   setAttachments,
@@ -70,10 +63,11 @@ function PureMultimodalInput({
   handleSubmit,
   className,
   selectedModelId,
+  status,
 }: MultimodalInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
-  const { status } = useSession();
+  const { status: authStatus } = useSession();
   const { open } = useLoginDialog();
 
   const [useSearch, setUseSearch] = useState(false);
@@ -127,7 +121,7 @@ function PureMultimodalInput({
   };
 
   const submitForm = useCallback(() => {
-    if (status === "unauthenticated") {
+    if (authStatus === "unauthenticated") {
       open();
 
       return;
@@ -149,7 +143,7 @@ function PureMultimodalInput({
     if (width && width > 768) {
       textareaRef.current?.focus();
     }
-  }, [status, chatId, handleSubmit, attachments, setAttachments, setLocalStorageInput, width, open]);
+  }, [authStatus, chatId, handleSubmit, attachments, setAttachments, setLocalStorageInput, width, open]);
 
   return (
     <div className="relative w-full flex flex-col gap-4">
@@ -211,7 +205,7 @@ function PureMultimodalInput({
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
 
-              if (isLoading) {
+              if (status !== "ready") {
                 toast.error("Please wait for the model to finish its response!");
               } else {
                 submitForm();
@@ -222,7 +216,7 @@ function PureMultimodalInput({
 
         <div className="rounded-2xl pl-3 pr-1 pb-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} isLoading={isLoading} />
+            <AttachmentsButton disabled={!can("image-input")} fileInputRef={fileInputRef} status={status} />
 
             {/* @deprecated code block */}
             {can("web-search") && (
@@ -250,7 +244,7 @@ function PureMultimodalInput({
           </div>
 
           <div className="p-2 w-fit flex flex-row justify-end">
-            {isLoading ? (
+            {status === "submitted" ? (
               <StopButton stop={stop} setMessages={setMessages} />
             ) : (
               <SendButton input={input} submitForm={submitForm} uploadQueue={uploadQueue} />
@@ -265,7 +259,7 @@ function PureMultimodalInput({
 export const MultimodalInput = memo(PureMultimodalInput, (prevProps, nextProps) => {
   if (prevProps.input !== nextProps.input) return false;
   if (prevProps.selectedModelId !== nextProps.selectedModelId) return false;
-  if (prevProps.isLoading !== nextProps.isLoading) return false;
+  if (prevProps.status !== nextProps.status) return false;
   if (!equal(prevProps.attachments, nextProps.attachments)) return false;
 
   return true;

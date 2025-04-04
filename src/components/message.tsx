@@ -1,7 +1,6 @@
 "use client";
 
 import type { ChatRequestOptions, Message } from "ai";
-import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
 import { Copy, PencilLine, SparklesIcon } from "lucide-react";
 import { memo, useState } from "react";
@@ -18,6 +17,8 @@ import { Button } from "./ui/button";
 import ShinyText from "./ui/shiny-text";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Weather } from "./weather";
+
+import { UseChatHelpers } from "@ai-sdk/react";
 
 // type MessageWithThinking = Message & {
 //   finishedThinking?: boolean;
@@ -54,7 +55,6 @@ import { Weather } from "./weather";
 // TODO: Implement Chain-of-thought of the deepseek distill models
 
 const PurePreviewMessage = ({
-  chatId,
   message,
   isLoading,
   setMessages,
@@ -64,11 +64,13 @@ const PurePreviewMessage = ({
   chatId: string;
   message: Message;
   isLoading: boolean;
-  setMessages: (messages: Message[] | ((messages: Message[]) => Message[])) => void;
+  setMessages: UseChatHelpers["setMessages"];
   reload: (chatRequestOptions?: ChatRequestOptions) => Promise<string | null | undefined>;
   isReadonly: boolean;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
+
+  console.log(message);
 
   return (
     <AnimatePresence>
@@ -111,53 +113,59 @@ const PurePreviewMessage = ({
               if (type === "text") {
                 if (mode === "view") {
                   return (
-                    <div key={key} className="flex flex-row gap-2 items-center max-w-3xl">
-                      {message.role === "user" && !isReadonly && (
-                        <>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                className="px-2 h-fit rounded-full text-muted-foreground opacity-0 group-hover/message:opacity-100"
-                                onClick={async () => {
-                                  await copyToClipboard(message.content);
+                    <div key={key} className="space-y-2">
+                      <div className="flex flex-row gap-2 items-center max-w-3xl">
+                        {message.role === "user" && !isReadonly && (
+                          <>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="px-2 h-fit rounded-full text-muted-foreground opacity-0 group-hover/message:opacity-100"
+                                  onClick={async () => {
+                                    await copyToClipboard(part.text);
 
-                                  toast.success("Copiado!");
-                                }}
-                              >
-                                <Copy className="size-4" />
-                              </Button>
-                            </TooltipTrigger>
+                                    toast.success("Copiado!");
+                                  }}
+                                >
+                                  <Copy className="size-4" />
+                                </Button>
+                              </TooltipTrigger>
 
-                            <TooltipContent>Copiar</TooltipContent>
-                          </Tooltip>
+                              <TooltipContent>Copiar</TooltipContent>
+                            </Tooltip>
 
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                className="px-2 h-fit rounded-full text-muted-foreground opacity-0 group-hover/message:opacity-100"
-                                onClick={async () => {
-                                  setMode("edit");
-                                }}
-                              >
-                                <PencilLine className="size-4" />
-                              </Button>
-                            </TooltipTrigger>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="px-2 h-fit rounded-full text-muted-foreground opacity-0 group-hover/message:opacity-100"
+                                  onClick={async () => {
+                                    setMode("edit");
+                                  }}
+                                >
+                                  <PencilLine className="size-4" />
+                                </Button>
+                              </TooltipTrigger>
 
-                            <TooltipContent>Editar mensagem</TooltipContent>
-                          </Tooltip>
-                        </>
-                      )}
+                              <TooltipContent>Editar mensagem</TooltipContent>
+                            </Tooltip>
+                          </>
+                        )}
 
-                      <div
-                        className={cn("flex flex-col w-full", {
-                          "bg-secondary px-3 py-2 rounded-xl": message.role === "user",
-                        })}
-                      >
-                        <MemoizedMarkdown id={message.id} content={part.text} />
+                        <div
+                          className={cn("flex flex-col w-full", {
+                            "bg-secondary px-3 py-2 rounded-xl": message.role === "user",
+                          })}
+                        >
+                          <MemoizedMarkdown id={message.id} content={part.text} />
+                        </div>
                       </div>
+
+                      {message.role === "assistant" && !isReadonly && (
+                        <MessageActions annotations={message.annotations} isLoading={isLoading} text={part.text} />
+                      )}
                     </div>
                   );
                 }
@@ -175,7 +183,7 @@ const PurePreviewMessage = ({
                       ) : toolName === "generateImage" ? (
                         <ImageGeneration />
                       ) : toolName === "search" ? (
-                        <></>
+                        <>Pesquisando...</>
                       ) : (
                         <div>other tool</div>
                       )}
@@ -216,10 +224,6 @@ const PurePreviewMessage = ({
                 />
               </div>
             )}
-
-            {!isReadonly && (
-              <MessageActions key={`action-${message.id}`} chatId={chatId} message={message} isLoading={isLoading} />
-            )}
           </div>
         </div>
       </motion.div>
@@ -230,7 +234,6 @@ const PurePreviewMessage = ({
 export const PreviewMessage = memo(PurePreviewMessage, (prevProps, nextProps) => {
   if (prevProps.isLoading !== nextProps.isLoading) return false;
   if (prevProps.message.content !== nextProps.message.content) return false;
-  if (!equal(prevProps.message.toolInvocations, nextProps.message.toolInvocations)) return false;
 
   return true;
 });

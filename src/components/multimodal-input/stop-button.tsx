@@ -1,8 +1,9 @@
-import { UseChatHelpers } from "ai/react";
 import { Pause } from "lucide-react";
 import { memo } from "react";
 
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
+
+import { UseChatHelpers } from "@ai-sdk/react";
 
 function PureStopButton({ stop, setMessages }: { stop: () => void; setMessages: UseChatHelpers["setMessages"] }) {
   return (

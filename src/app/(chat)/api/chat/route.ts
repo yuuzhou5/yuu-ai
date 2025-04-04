@@ -101,7 +101,13 @@ export async function POST(req: Request) {
         functionId: "stream-text",
       };
 
-      const modelIdentifier = model.apiIdentifier;
+      const modelIdentifier = model.apiIdentifier as
+        | `deepseek:${string}`
+        | `openai:${string}`
+        | `google:${string}`
+        | `groq:${string}`
+        | `anthropic:${string}`
+        | `xai:${string}`;
 
       const result = streamText({
         model: modelRegistry.languageModel(modelIdentifier),
@@ -137,8 +143,6 @@ export async function POST(req: Request) {
                 responseMessages: response.messages,
               });
 
-              console.log({ assistantMessage }, assistantMessage.parts);
-
               console.time("saveMessages");
               await saveMessages({
                 messages: [
@@ -150,7 +154,7 @@ export async function POST(req: Request) {
                     experimental_attachments: (assistantMessage.experimental_attachments ??
                       []) as unknown as Prisma.JsonArray,
                     content: null,
-                    annotations: [],
+                    annotations: [annotations],
                     reasoning: null,
                   },
                 ],

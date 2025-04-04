@@ -1,27 +1,22 @@
-import { ChatRequestOptions, Message } from "ai";
+import { ChatRequestOptions, UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { memo, useEffect, useRef, useState } from "react";
 
 import { PreviewMessage, ThinkingMessage } from "./message";
 import { Overview } from "./overview";
 
+import { UseChatHelpers } from "@ai-sdk/react";
+
 interface MessagesListProps {
   chatId: string;
-  isLoading: boolean;
-  messages: Array<Message>;
-  setMessages: (messages: Message[] | ((messages: Message[]) => Message[])) => void;
+  messages: Array<UIMessage>;
+  setMessages: UseChatHelpers["setMessages"];
+  status: UseChatHelpers["status"];
   reload: (chatRequestOptions?: ChatRequestOptions) => Promise<string | null | undefined>;
   isReadonly: boolean;
 }
 
-function PureMessagesList({
-  chatId,
-  isLoading,
-  messages,
-  setMessages,
-  reload,
-  isReadonly,
-}: MessagesListProps) {
+function PureMessagesList({ chatId, messages, setMessages, reload, isReadonly, status }: MessagesListProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const autoScrollEnabledRef = useRef(true);
@@ -63,14 +58,14 @@ function PureMessagesList({
           key={message.id}
           chatId={chatId}
           message={message}
-          isLoading={isLoading && messages.length - 1 === index}
+          isLoading={status === "streaming" && messages.length - 1 === index}
           setMessages={setMessages}
           reload={reload}
           isReadonly={isReadonly}
         />
       ))}
 
-      {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
+      {status === "streaming" && messages.length > 0 && messages[messages.length - 1].role === "user" && (
         <ThinkingMessage />
       )}
 
@@ -80,8 +75,8 @@ function PureMessagesList({
 }
 
 export const MessagesList = memo(PureMessagesList, (prevProps, nextProps) => {
-  if (prevProps.isLoading !== nextProps.isLoading) return false;
-  if (prevProps.isLoading && nextProps.isLoading) return false;
+  if (prevProps.status !== nextProps.status) return false;
+  if (prevProps.status && nextProps.status) return false;
   if (prevProps.messages.length !== nextProps.messages.length) return false;
   if (!equal(prevProps.messages, nextProps.messages)) return false;
 

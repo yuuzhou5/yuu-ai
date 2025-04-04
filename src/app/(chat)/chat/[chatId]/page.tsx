@@ -23,6 +23,7 @@ function convertToUIMessages(messages: Array<Message>): Array<UIMessage> {
     content: "",
     createdAt: message.createdAt,
     experimental_attachments: (message.experimental_attachments as unknown as Array<Attachment>) ?? [],
+    annotations: message.annotations as UIMessage["annotations"],
   }));
 }
 
