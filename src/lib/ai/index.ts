@@ -1,4 +1,4 @@
-import { customProvider, experimental_createProviderRegistry as createProviderRegistry } from "ai";
+import { createProviderRegistry, customProvider } from "ai";
 
 import { anthropic } from "@ai-sdk/anthropic";
 import { deepseek } from "@ai-sdk/deepseek";

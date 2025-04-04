@@ -1,7 +1,9 @@
 import { generateText, tool } from "ai";
 import { z } from "zod";
 
-import { google, GoogleGenerativeAIProviderMetadata } from "@ai-sdk/google";
+import { modelRegistry } from "..";
+
+import { GoogleGenerativeAIProviderMetadata } from "@ai-sdk/google";
 
 export const search = tool({
   description: "Search in the web. ",
@@ -10,7 +12,7 @@ export const search = tool({
   }),
   execute: async ({ query }) => {
     const { providerMetadata } = await generateText({
-      model: google("gemini-2.0-flash-001", { useSearchGrounding: true }),
+      model: modelRegistry.languageModel("google:gemini-2.0-flash-exp-search"),
       prompt: query,
     });
 
