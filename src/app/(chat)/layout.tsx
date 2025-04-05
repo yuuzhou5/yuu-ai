@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 
 import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
+import { ChatDetailsDialogProvider } from "@/components/chat-details-dialog";
 import ConfigDialog, { ConfigProvider } from "@/components/config-dialog";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
@@ -12,13 +13,15 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   return (
     <ConfigProvider>
-      <ConfigDialog />
+      <ChatDetailsDialogProvider>
+        <ConfigDialog />
 
-      <SidebarProvider defaultOpen={session?.user ? defaultOpen : false}>
-        <AppSidebar user={session?.user} />
+        <SidebarProvider defaultOpen={session?.user ? defaultOpen : false}>
+          <AppSidebar user={session?.user} />
 
-        <SidebarInset>{children}</SidebarInset>
-      </SidebarProvider>
+          <SidebarInset>{children}</SidebarInset>
+        </SidebarProvider>
+      </ChatDetailsDialogProvider>
     </ConfigProvider>
   );
 }

@@ -28,6 +28,7 @@ import {
 // import { models } from "@/lib/ai/models";
 import { cn, fetcher } from "@/lib/utils";
 
+import { useChatDetailsDialog } from "./chat-details-dialog";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -53,6 +54,8 @@ const PureChatItem = ({
   onDelete: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
+  const { setOpen } = useChatDetailsDialog();
+
   return (
     <SidebarMenuItem>
       <TooltipProvider delayDuration={200}>
@@ -60,8 +63,6 @@ const PureChatItem = ({
           <TooltipTrigger asChild>
             <SidebarMenuButton asChild isActive={isActive}>
               <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-                {/* {chatModel && <chatModel.icon className="size-4" />} */}
-
                 <span>{chat.title}</span>
               </Link>
             </SidebarMenuButton>
@@ -86,7 +87,7 @@ const PureChatItem = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent side="right">
-          <DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setOpen(true)}>
             <EyeIcon />
             <span>Ver detalhes</span>
           </DropdownMenuItem>
