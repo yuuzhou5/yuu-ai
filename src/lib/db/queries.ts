@@ -1,9 +1,29 @@
-// eslint-disable-next-line simple-import-sort/imports
-import "server-only";
+"use server";
+
+import { subDays } from "date-fns";
 
 import { prisma } from "../prisma";
+
 import { Message } from "@prisma/client";
 import { InputJsonValue } from "@prisma/client/runtime/library";
+
+export async function getChatsByUserIdInLastThirtyDays({ userId }: { userId: string }) {
+  const thirtyDaysAgo = subDays(new Date(), 30);
+
+  const chats = await prisma.chat.findMany({
+    where: {
+      userId: userId,
+      updatedAt: {
+        gte: thirtyDaysAgo,
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+
+  return chats;
+}
 
 export async function getChatById({ id }: { id: string }) {
   try {
